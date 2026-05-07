@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Tree 7
-  m_Shader: {fileID: 4800000, guid: f220b1164e2632c42a78c48699f1c756, type: 3}
+  m_Shader: {fileID: 4800000, guid: 976c6633be3b2e845b3500744be0c734, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -29,10 +29,18 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
+    - _BendStiffness: 1
     - _Brightness: 1
     - _Cutoff: 0.5
     - _Glossiness: 0.5
     - _Metallic: 0
+    - _NoiseScale: 1
+    - _PivotHeight: 0.5
+    - _SwayFrequency: 0.5
+    - _WindGust: 0.05
+    - _WindSpeed: 3
+    - _WindStrength: 0.2
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _WindDirection: {r: 1, g: 1, b: 0, a: 0}
   m_BuildTextureStacks: []

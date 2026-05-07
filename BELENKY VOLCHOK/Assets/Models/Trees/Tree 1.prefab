@@ -1,5 +1,37 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &2687973511586703178
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2154244364585661781}
+  m_Layer: 0
+  m_Name: Tree1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2154244364585661781
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2687973511586703178}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 4925709351903894245}
+  m_Father: {fileID: 7151100210447410175}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2899865988123655462
 GameObject:
   m_ObjectHideFlags: 0
@@ -28,11 +60,11 @@ Transform:
   m_GameObject: {fileID: 2899865988123655462}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: -0.029, y: 0, z: -0.39}
-  m_LocalScale: {x: 15, y: 1, z: 0.06666666}
+  m_LocalPosition: {x: -0.029000001, y: 0, z: -0.39}
+  m_LocalScale: {x: 15, y: 1, z: 0.066666655}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 7151100210447410175}
+  m_Father: {fileID: 2154244364585661781}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!33 &58121422689403346
 MeshFilter:
@@ -139,7 +171,7 @@ Transform:
   m_LocalScale: {x: 15, y: 15, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 4925709351903894245}
+  - {fileID: 2154244364585661781}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &2460739115417277799
@@ -232,12 +264,15 @@ LODGroup:
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 1627376181280898229}
+    - renderer: {fileID: 6370505130428692339}
   - screenRelativeHeight: 0.3
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 1627376181280898229}
+    - renderer: {fileID: 6370505130428692339}
   - screenRelativeHeight: 0.1
     fadeTransitionWidth: 0
     renderers:
     - renderer: {fileID: 1627376181280898229}
+    - renderer: {fileID: 6370505130428692339}
   m_Enabled: 1
