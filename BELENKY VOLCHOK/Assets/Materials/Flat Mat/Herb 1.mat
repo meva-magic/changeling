@@ -20,13 +20,13 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Doll 1
-  m_Shader: {fileID: 4800000, guid: 8d7d69d0f96312443982835ee6ed7afc, type: 3}
+  m_Name: Herb 1
+  m_Shader: {fileID: 4800000, guid: eb648e3bebc4c4a4b8faaf0e09933677, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords:
+  m_ValidKeywords:
   - STRETCH
+  m_InvalidKeywords: []
   m_LightmapFlags: 2
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -38,7 +38,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 0a23b2716ed5b434991bd054875b4a4e, type: 3}
+        m_Texture: {fileID: 2800000, guid: 2ed5fc1106d441a47809b7ba68f5f259, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _NormalMap:
@@ -66,23 +66,19 @@ Material:
     - _BUILTIN_QueueControl: 0
     - _BUILTIN_QueueOffset: 0
     - _Blend: 1000
-    - _Brightness: 1
-    - _Cutoff: 0
+    - _Cutoff: 0.6
     - _Glossiness: 0.5
     - _Metallic: 0
     - _Mode: 2
     - _NormalStrength: 0
-    - _PivotHeight: 0.7
     - _QueueControl: 0
     - _QueueOffset: 0
     - _Smoothness: 0
     - _Stretch: 1
     - _Tiling: 0.001
-    - _WindSpeed: 0.8
-    - _WindStrength: 0.15
     m_Colors:
     - _BackgroundColor: {r: 0, g: 0, b: 0, a: 0}
-    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _Color: {r: 0.7735849, g: 0.7735849, b: 0.7735849, a: 1}
   m_BuildTextureStacks: []
 --- !u!114 &5342984771916183324
 MonoBehaviour:

@@ -2,6 +2,9 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
+    [Header("References")]
+    [SerializeField] private Transform cameraHolder; // The new empty parent for the camera
+    
     [Header("Sensitivity Settings")]
     [SerializeField] private float sensitivity = 1.5f;
     [SerializeField] private float smoothing = 1.5f;
@@ -22,6 +25,24 @@ public class MouseLook : MonoBehaviour
     private void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
+        
+        // Auto-find camera holder if not assigned
+        if (cameraHolder == null)
+        {
+            // Assume camera is first child and we need to create a holder
+            Camera cam = GetComponentInChildren<Camera>();
+            if (cam != null && cam.transform.parent == transform)
+            {
+                // Create holder between player and camera
+                GameObject holder = new GameObject("CameraHolder");
+                holder.transform.SetParent(transform);
+                holder.transform.localPosition = Vector3.zero;
+                holder.transform.localRotation = Quaternion.identity;
+                
+                cam.transform.SetParent(holder.transform);
+                cameraHolder = holder.transform;
+            }
+        }
     }
 
     private void Update()
@@ -48,11 +69,11 @@ public class MouseLook : MonoBehaviour
 
     private void MovePlayer()
     {
-        // Horizontal rotation (left/right) - exactly like your original
+        // Horizontal rotation - only rotate the player object around Y axis
         currentHorizontalLook += smoothedMouseX;
         transform.localRotation = Quaternion.AngleAxis(currentHorizontalLook, Vector3.up);
         
-        // Vertical rotation (up/down) - NEW
+        // Vertical rotation - only rotate the camera holder around X axis
         currentVerticalLook -= smoothedMouseY;
         
         if (limitVerticalLook)
@@ -60,7 +81,9 @@ public class MouseLook : MonoBehaviour
             currentVerticalLook = Mathf.Clamp(currentVerticalLook, minVerticalAngle, maxVerticalAngle);
         }
         
-        // Combine both rotations
-        transform.localRotation = Quaternion.Euler(currentVerticalLook, currentHorizontalLook, 0f);
+        if (cameraHolder != null)
+        {
+            cameraHolder.localRotation = Quaternion.Euler(currentVerticalLook, 0f, 0f);
+        }
     }
 }
