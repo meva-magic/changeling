@@ -12,20 +12,102 @@ Shader "Custom/StandardBillboardLit"
     SubShader
     {
         Tags { 
-            "RenderType"="Transparent" 
-            "Queue"="Transparent" 
+            "RenderType"="TransparentCutout" 
+            "Queue"="AlphaTest" 
             "RenderPipeline"="UniversalPipeline"
-            "IgnoreProjector"="True"
         }
-        Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
         Cull Off
         LOD 200
 
         Pass
         {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            
+            ZWrite On
+            ColorMask 0
+            
+            HLSLPROGRAM
+            #pragma vertex DepthVert
+            #pragma fragment DepthFrag
+            
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+            half _Cutoff;
+
+            Varyings DepthVert(Attributes input)
+            {
+                Varyings output;
+                
+                float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
+                
+                // Get camera direction in XZ plane only (ignore Y tilt)
+                float3 cameraPos = _WorldSpaceCameraPos;
+                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
+                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
+                
+                float3 objectScale = float3(
+                    length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
+                    length(float3(UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21)),
+                    length(float3(UNITY_MATRIX_M._m02, UNITY_MATRIX_M._m12, UNITY_MATRIX_M._m22))
+                );
+                
+                float3 scaledVertex = float3(
+                    input.positionOS.x * objectScale.x, 
+                    input.positionOS.y * objectScale.y, 
+                    0
+                );
+                
+                float flipFactor = 1.0;
+                float3 worldRight = normalize(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
+                float dotProduct = dot(worldRight, float3(1, 0, 0));
+                
+                if (dotProduct < -0.5)
+                    flipFactor = -1.0;
+                
+                scaledVertex.x *= flipFactor;
+                
+                // Billboard on XZ plane, keep vertical orientation
+                float3 worldVertex = worldPos;
+                worldVertex += scaledVertex.x * camRight;
+                worldVertex.y += scaledVertex.y * objectScale.y;
+                
+                output.positionCS = TransformWorldToHClip(worldVertex);
+                output.uv = input.uv;
+                
+                return output;
+            }
+
+            half4 DepthFrag(Varyings input) : SV_Target
+            {
+                half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
+                clip(alpha - _Cutoff);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
+            
+            ZWrite Off
+            Blend SrcAlpha OneMinusSrcAlpha
             
             HLSLPROGRAM
             #pragma vertex vert
@@ -71,24 +153,11 @@ Shader "Custom/StandardBillboardLit"
                 
                 float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
                 
-                // Get camera vectors
-                float3 camRight = float3(UNITY_MATRIX_V._m00, UNITY_MATRIX_V._m10, UNITY_MATRIX_V._m20);
-                float3 camUp = float3(UNITY_MATRIX_V._m01, UNITY_MATRIX_V._m11, UNITY_MATRIX_V._m21);
-                float3 camForward = float3(UNITY_MATRIX_V._m02, UNITY_MATRIX_V._m12, UNITY_MATRIX_V._m22);
-                
-                // For Y-axis only billboarding: use camera right but keep world up
-                float3 worldUp = float3(0, 1, 0);
-                
-                // Project camera right onto horizontal plane
-                float3 horizontalRight = camRight;
-                horizontalRight.y = 0;
-                
-                // If camera is directly above, fallback
-                if (length(horizontalRight) < 0.001)
-                {
-                    horizontalRight = float3(1, 0, 0);
-                }
-                horizontalRight = normalize(horizontalRight);
+                // Get camera direction in XZ plane only (ignore Y tilt)
+                float3 cameraPos = _WorldSpaceCameraPos;
+                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
+                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
+                float3 camForward = cameraDirXZ;
                 
                 float3 objectScale = float3(
                     length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
@@ -107,30 +176,18 @@ Shader "Custom/StandardBillboardLit"
                 float dotProduct = dot(worldRight, float3(1, 0, 0));
                 
                 if (dotProduct < -0.5)
-                {
                     flipFactor = -1.0;
-                }
                 
                 scaledVertex.x *= flipFactor;
                 
-                // Y-axis only billboarding
+                // Billboard on XZ plane, keep vertical orientation
                 float3 worldVertex = worldPos;
-                worldVertex += scaledVertex.x * horizontalRight;  // Rotate around Y only
-                worldVertex += scaledVertex.y * worldUp;           // Keep vertical axis fixed
+                worldVertex += scaledVertex.x * camRight;
+                worldVertex.y += scaledVertex.y * objectScale.y;
                 
                 output.positionCS = TransformWorldToHClip(worldVertex);
                 output.positionWS = worldVertex;
-                
-                // Use camera forward projected to horizontal for normal
-                float3 horizontalForward = camForward;
-                horizontalForward.y = 0;
-                if (length(horizontalForward) < 0.001)
-                {
-                    horizontalForward = float3(0, 0, 1);
-                }
-                horizontalForward = normalize(horizontalForward);
-                output.normalWS = -horizontalForward;
-                
+                output.normalWS = camForward;
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 output.shadowCoord = TransformWorldToShadowCoord(worldVertex);
                 
@@ -181,6 +238,86 @@ Shader "Custom/StandardBillboardLit"
                 col.rgb *= lighting;
                 
                 return col;
+            }
+            ENDHLSL
+        }
+        
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            
+            ZWrite On
+            ZTest LEqual
+            
+            HLSLPROGRAM
+            #pragma vertex ShadowVert
+            #pragma fragment ShadowFrag
+            
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            TEXTURE2D(_MainTex);
+            SAMPLER(sampler_MainTex);
+            half _Cutoff;
+
+            Varyings ShadowVert(Attributes input)
+            {
+                Varyings output;
+                
+                float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
+                
+                float3 cameraPos = _WorldSpaceCameraPos;
+                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
+                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
+                
+                float3 objectScale = float3(
+                    length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
+                    length(float3(UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21)),
+                    length(float3(UNITY_MATRIX_M._m02, UNITY_MATRIX_M._m12, UNITY_MATRIX_M._m22))
+                );
+                
+                float3 scaledVertex = float3(
+                    input.positionOS.x * objectScale.x, 
+                    input.positionOS.y * objectScale.y, 
+                    0
+                );
+                
+                float flipFactor = 1.0;
+                float3 worldRight = normalize(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
+                float dotProduct = dot(worldRight, float3(1, 0, 0));
+                
+                if (dotProduct < -0.5)
+                    flipFactor = -1.0;
+                
+                scaledVertex.x *= flipFactor;
+                
+                float3 worldVertex = worldPos;
+                worldVertex += scaledVertex.x * camRight;
+                worldVertex.y += scaledVertex.y * objectScale.y;
+                
+                output.positionCS = TransformWorldToHClip(worldVertex);
+                output.uv = input.uv;
+                
+                return output;
+            }
+
+            half4 ShadowFrag(Varyings input) : SV_Target
+            {
+                half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
+                clip(alpha - _Cutoff);
+                return 0;
             }
             ENDHLSL
         }
