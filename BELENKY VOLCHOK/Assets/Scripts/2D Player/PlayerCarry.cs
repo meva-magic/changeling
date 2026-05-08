@@ -21,7 +21,6 @@ public class PlayerCarry : MonoBehaviour
     {
         playerMovement = GetComponent<PlayerMovement>();
         if (playerMovement != null) originalMoveSpeed = playerMovement.MoveSpeed;
-        
         if (pickupIndicatorUI != null) pickupIndicatorUI.SetActive(false);
     }
     
@@ -30,16 +29,18 @@ public class PlayerCarry : MonoBehaviour
         FindNearestItem();
         UpdatePickupIndicator();
         
+        if (SimpleDialogueManager.Instance != null && SimpleDialogueManager.Instance.IsShowing)
+            return;
+        
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
+            if (IsNearNPC()) return;
             if (TryStartNearbyMinigame()) return;
             
             if (IsCarryingObject)
             {
-                if (nearestItem != null)
-                    SwapItems();
-                else
-                    DropObject();
+                if (nearestItem != null) SwapItems();
+                else DropObject();
             }
             else
             {
@@ -48,17 +49,26 @@ public class PlayerCarry : MonoBehaviour
         }
     }
     
+    private bool IsNearNPC()
+    {
+        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 3f);
+        foreach (Collider2D hit in hits)
+        {
+            if (hit.GetComponent<SimpleDialogueTrigger>() != null)
+                return true;
+        }
+        return false;
+    }
+    
     private void FindNearestItem()
     {
         nearestItem = null;
         float closestDistance = Mathf.Infinity;
-        
         PickupableItem[] allItems = FindObjectsOfType<PickupableItem>();
+        
         foreach (PickupableItem item in allItems)
         {
-            if (item == carriedPickupable) continue;
-            if (item.IsBeingCarried) continue;
-            
+            if (item == carriedPickupable || item.IsBeingCarried) continue;
             float distance = Vector2.Distance(transform.position, item.transform.position);
             if (distance <= item.pickupRange && distance < closestDistance)
             {
@@ -72,7 +82,9 @@ public class PlayerCarry : MonoBehaviour
     {
         if (pickupIndicatorUI != null)
         {
-            pickupIndicatorUI.SetActive(nearestItem != null || IsCarryingObject);
+            bool show = nearestItem != null && !IsCarryingObject &&
+                       (SimpleDialogueManager.Instance == null || !SimpleDialogueManager.Instance.IsShowing);
+            pickupIndicatorUI.SetActive(show);
         }
     }
     
@@ -94,24 +106,21 @@ public class PlayerCarry : MonoBehaviour
     private void TryPickupObject()
     {
         if (nearestItem == null) return;
-        
         carriedObject = nearestItem.gameObject;
         carriedPickupable = nearestItem;
         nearestItem.OnPickup(carryPoint);
-        
         if (nearestItem.slowsPlayer && playerMovement != null)
             playerMovement.SetMoveSpeed(originalMoveSpeed * slowSpeedMultiplier);
+        if (pickupIndicatorUI != null) pickupIndicatorUI.SetActive(false);
     }
     
     private void SwapItems()
     {
         Vector3 swapPosition = nearestItem.transform.position;
         carriedPickupable.OnDrop(swapPosition);
-        
         carriedObject = nearestItem.gameObject;
         carriedPickupable = nearestItem;
         nearestItem.OnPickup(carryPoint);
-        
         if (carriedPickupable.slowsPlayer && playerMovement != null)
             playerMovement.SetMoveSpeed(originalMoveSpeed * slowSpeedMultiplier);
         else if (playerMovement != null)
@@ -121,12 +130,9 @@ public class PlayerCarry : MonoBehaviour
     private void DropObject()
     {
         if (carriedObject == null) return;
-        
         carriedPickupable.OnDrop(dropPoint.position);
         carriedObject = null;
         carriedPickupable = null;
-        
-        if (playerMovement != null)
-            playerMovement.SetMoveSpeed(originalMoveSpeed);
+        if (playerMovement != null) playerMovement.SetMoveSpeed(originalMoveSpeed);
     }
 }

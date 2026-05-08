@@ -20,24 +20,35 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
-        dialoguePanel.SetActive(false);
+        Instance = this;
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        Debug.Log("DialogueManager initialized");
     }
     
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
+        Debug.Log($"ShowDialogue called with dialogue: {(dialogue != null ? dialogue.name : "null")}");
+        
         currentDialogue = dialogue;
         currentTrigger = trigger;
         currentLineIndex = 0;
         isShowing = true;
-        dialoguePanel.SetActive(true);
-        ShowNextLine();
+        
+        if (dialoguePanel != null)
+        {
+            dialoguePanel.SetActive(true);
+            ShowNextLine();
+        }
+        else
+        {
+            Debug.LogError("DialoguePanel is not assigned!");
+        }
     }
     
     private void Update()
     {
         if (!isShowing) return;
+        
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             if (typingCoroutine != null)
@@ -73,13 +84,8 @@ public class SimpleDialogueManager : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
-            
-            // Play voice sound on each letter
             if (!string.IsNullOrEmpty(currentDialogue.voiceSoundName) && AudioManager.instance != null)
-            {
                 AudioManager.instance.Play(currentDialogue.voiceSoundName);
-            }
-            
             yield return new WaitForSeconds(textSpeed);
         }
         typingCoroutine = null;
@@ -87,8 +93,9 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void EndDialogue()
     {
+        Debug.Log("Dialogue ended");
         isShowing = false;
-        dialoguePanel.SetActive(false);
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
         
         if (currentTrigger != null)
         {

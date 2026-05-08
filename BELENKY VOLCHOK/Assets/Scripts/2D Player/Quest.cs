@@ -8,6 +8,4 @@ public class SimpleQuest : ScriptableObject
     [TextArea(2, 5)]
     public string description;
     public string requiredItemID;
-    public string completionScene;
-    public float questTimeLimit = 0f;
 }

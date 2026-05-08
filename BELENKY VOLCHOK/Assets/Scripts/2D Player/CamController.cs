@@ -6,89 +6,101 @@ public class ZoneCamera : MonoBehaviour
 {
     public static ZoneCamera Instance;
     
-    [SerializeField] private float snapSpeed = 5f;
     [SerializeField] private Image fadeImage;
     [SerializeField] private float fadeDuration = 0.5f;
     
     private Vector3 targetPosition;
-    private bool isTransitioning;
     
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        Instance = this;
         
         if (fadeImage != null)
         {
             fadeImage.color = Color.clear;
-            fadeImage.gameObject.SetActive(false);
+            fadeImage.gameObject.SetActive(true);
         }
-    }
-    
-    private void Update()
-    {
-        if (!isTransitioning)
-        {
-            Vector3 target = new Vector3(targetPosition.x, targetPosition.y, transform.position.z);
-            transform.position = Vector3.Lerp(transform.position, target, Time.deltaTime * snapSpeed);
-        }
+        
+        targetPosition = transform.position;
+        Debug.Log("ZoneCamera initialized");
     }
     
     public void MoveToZone(Vector3 newPosition, bool useFade = true)
     {
-        if (isTransitioning) return;
+        Debug.Log($"MoveToZone called: {newPosition}");
+        StopAllCoroutines();
         StartCoroutine(TransitionToZone(newPosition, useFade));
-    }
-    
-    public void SnapToZone(Vector3 position)
-    {
-        targetPosition = position;
-        transform.position = new Vector3(position.x, position.y, transform.position.z);
     }
     
     private IEnumerator TransitionToZone(Vector3 newPosition, bool useFade)
     {
-        isTransitioning = true;
+        Debug.Log($"Starting transition to: {newPosition}");
         
+        // Fade to black
         if (useFade && fadeImage != null)
-            yield return StartCoroutine(Fade(1f));
+        {
+            float elapsed = 0f;
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float alpha = Mathf.Lerp(0, 1, elapsed / fadeDuration);
+                fadeImage.color = new Color(0, 0, 0, alpha);
+                yield return null;
+            }
+            fadeImage.color = Color.black;
+        }
         
+        // Snap camera
         targetPosition = newPosition;
+        transform.position = new Vector3(newPosition.x, newPosition.y, transform.position.z);
+        Debug.Log($"Camera snapped to: {transform.position}");
         
         yield return new WaitForSeconds(0.1f);
         
+        // Fade back
         if (useFade && fadeImage != null)
-            yield return StartCoroutine(Fade(0f));
+        {
+            float elapsed = 0f;
+            while (elapsed < fadeDuration)
+            {
+                elapsed += Time.deltaTime;
+                float alpha = Mathf.Lerp(1, 0, elapsed / fadeDuration);
+                fadeImage.color = new Color(0, 0, 0, alpha);
+                yield return null;
+            }
+            fadeImage.color = Color.clear;
+        }
         
-        isTransitioning = false;
+        Debug.Log("Transition complete");
     }
     
-    private IEnumerator Fade(float targetAlpha)
+    public Coroutine FadeToBlack()
     {
+        return StartCoroutine(FadeRoutine(1));
+    }
+    
+    public Coroutine FadeFromBlack()
+    {
+        return StartCoroutine(FadeRoutine(0));
+    }
+    
+    private IEnumerator FadeRoutine(float targetAlpha)
+    {
+        if (fadeImage == null) yield break;
+        
         fadeImage.gameObject.SetActive(true);
         float startAlpha = fadeImage.color.a;
         float elapsed = 0f;
-        Color color = fadeImage.color;
         
         while (elapsed < fadeDuration)
         {
             elapsed += Time.deltaTime;
-            float newAlpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / fadeDuration);
-            fadeImage.color = new Color(color.r, color.g, color.b, newAlpha);
+            float alpha = Mathf.Lerp(startAlpha, targetAlpha, elapsed / fadeDuration);
+            fadeImage.color = new Color(0, 0, 0, alpha);
             yield return null;
         }
         
-        fadeImage.color = new Color(color.r, color.g, color.b, targetAlpha);
+        fadeImage.color = new Color(0, 0, 0, targetAlpha);
         if (targetAlpha <= 0.01f) fadeImage.gameObject.SetActive(false);
-    }
-    
-    public Coroutine FadeToBlack(float duration = -1)
-    {
-        return StartCoroutine(Fade(1f));
-    }
-    
-    public Coroutine FadeFromBlack(float duration = -1)
-    {
-        return StartCoroutine(Fade(0f));
     }
 }
