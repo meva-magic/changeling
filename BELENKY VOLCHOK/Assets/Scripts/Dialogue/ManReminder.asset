@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 46264f64304960b4dbdaf4f2d1e02145, type: 3}
   m_Name: ManReminder
   m_EditorClassIdentifier: 
-  dialogueLines: []
+  dialogueLines:
+  - bucket
   nextDialogue: {fileID: 0}
   givesQuest: 0
   questID: 

@@ -76,6 +76,12 @@ MonoBehaviour:
     pitch: 1
     loop: 1
     source: {fileID: 0}
+  - name: Screamer
+    clip: {fileID: 0}
+    volume: 0
+    pitch: 0
+    loop: 0
+    source: {fileID: 0}
   - name: Window Knock Big
     clip: {fileID: 0}
     volume: 1

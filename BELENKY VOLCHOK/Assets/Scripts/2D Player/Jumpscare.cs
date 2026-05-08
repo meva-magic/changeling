@@ -8,6 +8,7 @@ public class FairyJumpscare : MonoBehaviour
     [SerializeField] private GameObject babyObject;
     [SerializeField] private GameObject changelingPrefab;
     [SerializeField] private GameObject jumpScareUIImage;
+    [SerializeField] private string fairySoundName = "FairyVoice";
     
     public float AppearDuration => appearDuration;
     
@@ -17,9 +18,11 @@ public class FairyJumpscare : MonoBehaviour
     private IEnumerator JumpscareSequence()
     {
         ZoneCamera zoneCam = ZoneCamera.Instance;
+        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
+        
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
         if (fairyVisual != null) fairyVisual.SetActive(true);
-        PlayVoiceSound();
+        PlaySound();
         if (zoneCam != null) yield return zoneCam.FadeFromBlack();
         yield return new WaitForSeconds(appearDuration);
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
@@ -30,19 +33,15 @@ public class FairyJumpscare : MonoBehaviour
     private IEnumerator BabySwapSequence()
     {
         ZoneCamera zoneCam = ZoneCamera.Instance;
+        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
         
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
         if (fairyVisual != null) fairyVisual.SetActive(true);
-        PlayVoiceSound();
+        PlaySound();
         yield return new WaitForSeconds(1.5f);
         
-        // Save baby position before destroying
         Vector3 babyPosition = babyObject != null ? babyObject.transform.position : Vector3.zero;
-        
-        // Destroy baby
         if (babyObject != null) Destroy(babyObject);
-        
-        // Spawn changeling at baby's position
         if (changelingPrefab != null)
             Instantiate(changelingPrefab, babyPosition, Quaternion.identity);
         
@@ -58,22 +57,21 @@ public class FairyJumpscare : MonoBehaviour
     private IEnumerator OvenJumpscareSequence()
     {
         ZoneCamera zoneCam = ZoneCamera.Instance;
+        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
         
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
         if (jumpScareUIImage != null) jumpScareUIImage.SetActive(true);
-        PlayVoiceSound();
+        PlaySound();
         if (zoneCam != null) yield return zoneCam.FadeFromBlack();
-        
         yield return new WaitForSeconds(appearDuration);
-        
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
         if (jumpScareUIImage != null) jumpScareUIImage.SetActive(false);
         if (zoneCam != null) yield return zoneCam.FadeFromBlack();
     }
     
-    private void PlayVoiceSound()
+    private void PlaySound()
     {
-        if (AudioManager.instance != null)
-            AudioManager.instance.Play("Voice");
+        if (AudioManager.instance != null && !string.IsNullOrEmpty(fairySoundName))
+            AudioManager.instance.Play(fairySoundName);
     }
 }

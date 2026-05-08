@@ -20,41 +20,53 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void Awake()
     {
-        Instance = this;
-        if (dialoguePanel != null) dialoguePanel.SetActive(false);
-        Debug.Log("DialogueManager initialized");
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+        
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
     }
     
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
-        Debug.Log($"ShowDialogue called with dialogue: {(dialogue != null ? dialogue.name : "null")}");
+        // Safety check
+        if (dialogue == null)
+        {
+            Debug.LogError("Dialogue is null!");
+            return;
+        }
+        
+        if (dialogue.dialogueLines == null || dialogue.dialogueLines.Length == 0)
+        {
+            Debug.LogError($"Dialogue '{dialogue.name}' has NO lines! Add dialogue lines in the inspector.");
+            return;
+        }
+        
+        if (dialoguePanel == null)
+        {
+            Debug.LogError("Dialogue Panel not assigned!");
+            return;
+        }
         
         currentDialogue = dialogue;
         currentTrigger = trigger;
         currentLineIndex = 0;
         isShowing = true;
         
-        if (dialoguePanel != null)
-        {
-            dialoguePanel.SetActive(true);
-            ShowNextLine();
-        }
-        else
-        {
-            Debug.LogError("DialoguePanel is not assigned!");
-        }
+        dialoguePanel.SetActive(true);
+        ShowNextLine();
     }
     
     private void Update()
     {
         if (!isShowing) return;
-        
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             if (typingCoroutine != null)
             {
                 StopCoroutine(typingCoroutine);
-                dialogueText.text = currentDialogue.dialogueLines[currentLineIndex];
+                if (currentLineIndex < currentDialogue.dialogueLines.Length)
+                    dialogueText.text = currentDialogue.dialogueLines[currentLineIndex];
                 typingCoroutine = null;
             }
             else
@@ -66,6 +78,12 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void ShowNextLine()
     {
+        if (currentDialogue == null || currentDialogue.dialogueLines == null)
+        {
+            EndDialogue();
+            return;
+        }
+        
         if (currentLineIndex < currentDialogue.dialogueLines.Length)
         {
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
@@ -84,8 +102,11 @@ public class SimpleDialogueManager : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
-            if (!string.IsNullOrEmpty(currentDialogue.voiceSoundName) && AudioManager.instance != null)
-                AudioManager.instance.Play(currentDialogue.voiceSoundName);
+            if (currentDialogue != null && !string.IsNullOrEmpty(currentDialogue.voiceSoundName))
+            {
+                if (AudioManager.instance != null)
+                    AudioManager.instance.Play(currentDialogue.voiceSoundName);
+            }
             yield return new WaitForSeconds(textSpeed);
         }
         typingCoroutine = null;
@@ -93,9 +114,9 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void EndDialogue()
     {
-        Debug.Log("Dialogue ended");
         isShowing = false;
-        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
         
         if (currentTrigger != null)
         {

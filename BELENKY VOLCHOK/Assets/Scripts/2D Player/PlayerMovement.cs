@@ -18,7 +18,6 @@ public class PlayerMovement : MonoBehaviour
         moveInput = 0;
         if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) moveInput = -1;
         if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) moveInput = 1;
-        
         UpdateFacing();
         HandleMovement();
     }
@@ -45,13 +44,5 @@ public class PlayerMovement : MonoBehaviour
         transform.localScale = scale;
     }
     
-    public void SetMoveSpeed(float newSpeed)
-    {
-        moveSpeed = newSpeed;
-    }
-    
-    public float GetOriginalSpeed()
-    {
-        return moveSpeed;
-    }
+    public void SetMoveSpeed(float newSpeed) { moveSpeed = newSpeed; }
 }

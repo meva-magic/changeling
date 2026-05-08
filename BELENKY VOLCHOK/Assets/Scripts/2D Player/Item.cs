@@ -14,11 +14,6 @@ public class PickupableItem : MonoBehaviour
     
     private void Awake() { itemCollider = GetComponent<Collider2D>(); }
     
-    public bool IsPlayerInRange(Transform playerTransform)
-    {
-        return Vector2.Distance(transform.position, playerTransform.position) <= pickupRange;
-    }
-    
     public void OnPickup(Transform carryPoint)
     {
         isBeingCarried = true;
@@ -27,7 +22,6 @@ public class PickupableItem : MonoBehaviour
         transform.localRotation = Quaternion.identity;
         if (itemCollider != null) itemCollider.enabled = false;
         
-        // Load scene if set (for changeling)
         if (!string.IsNullOrEmpty(sceneToLoadOnPickup))
         {
             SceneLoader loader = FindObjectOfType<SceneLoader>();

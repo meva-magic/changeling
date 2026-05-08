@@ -29,18 +29,23 @@ public class PlayerCarry : MonoBehaviour
         FindNearestItem();
         UpdatePickupIndicator();
         
+        // Don't process if dialogue is active
         if (SimpleDialogueManager.Instance != null && SimpleDialogueManager.Instance.IsShowing)
             return;
         
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
-            if (IsNearNPC()) return;
+            // If near ANY NPC that has player in range, let the NPC handle it
+            if (IsNearAnyNPC()) return;
+            
             if (TryStartNearbyMinigame()) return;
             
             if (IsCarryingObject)
             {
-                if (nearestItem != null) SwapItems();
-                else DropObject();
+                if (nearestItem != null)
+                    SwapItems();
+                else
+                    DropObject();
             }
             else
             {
@@ -49,12 +54,12 @@ public class PlayerCarry : MonoBehaviour
         }
     }
     
-    private bool IsNearNPC()
+    private bool IsNearAnyNPC()
     {
-        Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 3f);
-        foreach (Collider2D hit in hits)
+        SimpleDialogueTrigger[] npcs = FindObjectsOfType<SimpleDialogueTrigger>();
+        foreach (SimpleDialogueTrigger npc in npcs)
         {
-            if (hit.GetComponent<SimpleDialogueTrigger>() != null)
+            if (npc.IsPlayerInRange())
                 return true;
         }
         return false;
@@ -65,7 +70,6 @@ public class PlayerCarry : MonoBehaviour
         nearestItem = null;
         float closestDistance = Mathf.Infinity;
         PickupableItem[] allItems = FindObjectsOfType<PickupableItem>();
-        
         foreach (PickupableItem item in allItems)
         {
             if (item == carriedPickupable || item.IsBeingCarried) continue;
@@ -80,12 +84,14 @@ public class PlayerCarry : MonoBehaviour
     
     private void UpdatePickupIndicator()
     {
-        if (pickupIndicatorUI != null)
-        {
-            bool show = nearestItem != null && !IsCarryingObject &&
-                       (SimpleDialogueManager.Instance == null || !SimpleDialogueManager.Instance.IsShowing);
-            pickupIndicatorUI.SetActive(show);
-        }
+        if (pickupIndicatorUI == null) return;
+        
+        bool dialogueActive = SimpleDialogueManager.Instance != null && SimpleDialogueManager.Instance.IsShowing;
+        bool nearNPC = IsNearAnyNPC();
+        
+        // Only show when not carrying, not in dialogue, not near NPC, and item on ground nearby
+        bool showIndicator = !dialogueActive && !nearNPC && !IsCarryingObject && nearestItem != null;
+        pickupIndicatorUI.SetActive(showIndicator);
     }
     
     private bool TryStartNearbyMinigame()
@@ -111,7 +117,6 @@ public class PlayerCarry : MonoBehaviour
         nearestItem.OnPickup(carryPoint);
         if (nearestItem.slowsPlayer && playerMovement != null)
             playerMovement.SetMoveSpeed(originalMoveSpeed * slowSpeedMultiplier);
-        if (pickupIndicatorUI != null) pickupIndicatorUI.SetActive(false);
     }
     
     private void SwapItems()
