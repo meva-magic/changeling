@@ -15,99 +15,17 @@ Shader "Custom/StandardBillboardLit"
             "RenderType"="TransparentCutout" 
             "Queue"="AlphaTest" 
             "RenderPipeline"="UniversalPipeline"
+            "IgnoreProjector"="True"
         }
+        Blend SrcAlpha OneMinusSrcAlpha
+        ZWrite On
         Cull Off
         LOD 200
 
         Pass
         {
-            Name "DepthOnly"
-            Tags { "LightMode"="DepthOnly" }
-            
-            ZWrite On
-            ColorMask 0
-            
-            HLSLPROGRAM
-            #pragma vertex DepthVert
-            #pragma fragment DepthFrag
-            
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv : TEXCOORD0;
-            };
-
-            TEXTURE2D(_MainTex);
-            SAMPLER(sampler_MainTex);
-            half _Cutoff;
-
-            Varyings DepthVert(Attributes input)
-            {
-                Varyings output;
-                
-                float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
-                
-                // Get camera direction in XZ plane only (ignore Y tilt)
-                float3 cameraPos = _WorldSpaceCameraPos;
-                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
-                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
-                
-                float3 objectScale = float3(
-                    length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
-                    length(float3(UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21)),
-                    length(float3(UNITY_MATRIX_M._m02, UNITY_MATRIX_M._m12, UNITY_MATRIX_M._m22))
-                );
-                
-                float3 scaledVertex = float3(
-                    input.positionOS.x * objectScale.x, 
-                    input.positionOS.y * objectScale.y, 
-                    0
-                );
-                
-                float flipFactor = 1.0;
-                float3 worldRight = normalize(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
-                float dotProduct = dot(worldRight, float3(1, 0, 0));
-                
-                if (dotProduct < -0.5)
-                    flipFactor = -1.0;
-                
-                scaledVertex.x *= flipFactor;
-                
-                // Billboard on XZ plane, keep vertical orientation
-                float3 worldVertex = worldPos;
-                worldVertex += scaledVertex.x * camRight;
-                worldVertex.y += scaledVertex.y * objectScale.y;
-                
-                output.positionCS = TransformWorldToHClip(worldVertex);
-                output.uv = input.uv;
-                
-                return output;
-            }
-
-            half4 DepthFrag(Varyings input) : SV_Target
-            {
-                half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a;
-                clip(alpha - _Cutoff);
-                return 0;
-            }
-            ENDHLSL
-        }
-
-        Pass
-        {
             Name "ForwardLit"
             Tags { "LightMode"="UniversalForward" }
-            
-            ZWrite Off
-            Blend SrcAlpha OneMinusSrcAlpha
             
             HLSLPROGRAM
             #pragma vertex vert
@@ -151,43 +69,41 @@ Shader "Custom/StandardBillboardLit"
             {
                 Varyings output;
                 
-                float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
+                // Get world position of object pivot (ignore object rotation)
+                float4 worldPos = mul(unity_ObjectToWorld, float4(0, 0, 0, 1));
                 
-                // Get camera direction in XZ plane only (ignore Y tilt)
-                float3 cameraPos = _WorldSpaceCameraPos;
-                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
-                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
-                float3 camForward = cameraDirXZ;
+                // Get direction from object to camera, flat on XZ plane
+                float3 toCamera = _WorldSpaceCameraPos - worldPos.xyz;
+                float3 toCameraXZ = normalize(float3(toCamera.x, 0, toCamera.z));
                 
-                float3 objectScale = float3(
-                    length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
-                    length(float3(UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21)),
-                    length(float3(UNITY_MATRIX_M._m02, UNITY_MATRIX_M._m12, UNITY_MATRIX_M._m22))
+                // Calculate right vector (perpendicular to camera direction, horizontal)
+                float3 camRight = normalize(cross(float3(0, 1, 0), toCameraXZ));
+                
+                // Extract scale from object matrix
+                float scaleX = length(float3(unity_ObjectToWorld._m00, unity_ObjectToWorld._m10, unity_ObjectToWorld._m20));
+                float scaleY = length(float3(unity_ObjectToWorld._m01, unity_ObjectToWorld._m11, unity_ObjectToWorld._m21));
+                float scaleZ = length(float3(unity_ObjectToWorld._m02, unity_ObjectToWorld._m12, unity_ObjectToWorld._m22));
+                
+                // Get sign of X scale for flipping
+                float3 objRight = float3(unity_ObjectToWorld._m00, unity_ObjectToWorld._m10, unity_ObjectToWorld._m20);
+                float signX = dot(normalize(objRight), float3(1, 0, 0)) < 0 ? -1 : 1;
+                
+                // Build vertex in local space with scale applied
+                float3 localPos = float3(
+                    input.positionOS.x * scaleX * signX,
+                    input.positionOS.y * scaleY,
+                    input.positionOS.z * scaleZ
                 );
                 
-                float3 scaledVertex = float3(
-                    input.positionOS.x * objectScale.x, 
-                    input.positionOS.y * objectScale.y, 
-                    0
-                );
-                
-                float flipFactor = 1.0;
-                float3 worldRight = normalize(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
-                float dotProduct = dot(worldRight, float3(1, 0, 0));
-                
-                if (dotProduct < -0.5)
-                    flipFactor = -1.0;
-                
-                scaledVertex.x *= flipFactor;
-                
-                // Billboard on XZ plane, keep vertical orientation
-                float3 worldVertex = worldPos;
-                worldVertex += scaledVertex.x * camRight;
-                worldVertex.y += scaledVertex.y * objectScale.y;
+                // Billboard: rotate XZ around Y, keep Y as-is
+                float3 worldVertex;
+                worldVertex.x = worldPos.x + localPos.x * camRight.x + localPos.z * toCameraXZ.x;
+                worldVertex.y = worldPos.y + localPos.y;
+                worldVertex.z = worldPos.z + localPos.x * camRight.z + localPos.z * toCameraXZ.z;
                 
                 output.positionCS = TransformWorldToHClip(worldVertex);
                 output.positionWS = worldVertex;
-                output.normalWS = camForward;
+                output.normalWS = toCameraXZ;
                 output.uv = TRANSFORM_TEX(input.uv, _MainTex);
                 output.shadowCoord = TransformWorldToShadowCoord(worldVertex);
                 
@@ -276,36 +192,29 @@ Shader "Custom/StandardBillboardLit"
             {
                 Varyings output;
                 
-                float3 worldPos = TransformObjectToWorld(float3(0, 0, 0));
+                float4 worldPos = mul(unity_ObjectToWorld, float4(0, 0, 0, 1));
                 
-                float3 cameraPos = _WorldSpaceCameraPos;
-                float3 cameraDirXZ = normalize(float3(cameraPos.x - worldPos.x, 0, cameraPos.z - worldPos.z));
-                float3 camRight = normalize(cross(float3(0, 1, 0), cameraDirXZ));
+                float3 toCamera = _WorldSpaceCameraPos - worldPos.xyz;
+                float3 toCameraXZ = normalize(float3(toCamera.x, 0, toCamera.z));
+                float3 camRight = normalize(cross(float3(0, 1, 0), toCameraXZ));
                 
-                float3 objectScale = float3(
-                    length(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20)),
-                    length(float3(UNITY_MATRIX_M._m01, UNITY_MATRIX_M._m11, UNITY_MATRIX_M._m21)),
-                    length(float3(UNITY_MATRIX_M._m02, UNITY_MATRIX_M._m12, UNITY_MATRIX_M._m22))
+                float scaleX = length(float3(unity_ObjectToWorld._m00, unity_ObjectToWorld._m10, unity_ObjectToWorld._m20));
+                float scaleY = length(float3(unity_ObjectToWorld._m01, unity_ObjectToWorld._m11, unity_ObjectToWorld._m21));
+                float scaleZ = length(float3(unity_ObjectToWorld._m02, unity_ObjectToWorld._m12, unity_ObjectToWorld._m22));
+                
+                float3 objRight = float3(unity_ObjectToWorld._m00, unity_ObjectToWorld._m10, unity_ObjectToWorld._m20);
+                float signX = dot(normalize(objRight), float3(1, 0, 0)) < 0 ? -1 : 1;
+                
+                float3 localPos = float3(
+                    input.positionOS.x * scaleX * signX,
+                    input.positionOS.y * scaleY,
+                    input.positionOS.z * scaleZ
                 );
                 
-                float3 scaledVertex = float3(
-                    input.positionOS.x * objectScale.x, 
-                    input.positionOS.y * objectScale.y, 
-                    0
-                );
-                
-                float flipFactor = 1.0;
-                float3 worldRight = normalize(float3(UNITY_MATRIX_M._m00, UNITY_MATRIX_M._m10, UNITY_MATRIX_M._m20));
-                float dotProduct = dot(worldRight, float3(1, 0, 0));
-                
-                if (dotProduct < -0.5)
-                    flipFactor = -1.0;
-                
-                scaledVertex.x *= flipFactor;
-                
-                float3 worldVertex = worldPos;
-                worldVertex += scaledVertex.x * camRight;
-                worldVertex.y += scaledVertex.y * objectScale.y;
+                float3 worldVertex;
+                worldVertex.x = worldPos.x + localPos.x * camRight.x + localPos.z * toCameraXZ.x;
+                worldVertex.y = worldPos.y + localPos.y;
+                worldVertex.z = worldPos.z + localPos.x * camRight.z + localPos.z * toCameraXZ.z;
                 
                 output.positionCS = TransformWorldToHClip(worldVertex);
                 output.uv = input.uv;
