@@ -16,10 +16,11 @@ public class SimpleDialogueManager : MonoBehaviour
     private bool isShowing;
     private Coroutine typingCoroutine;
     private bool isLastLineFullyDisplayed;
-    private float dialogueEndTime; // Cooldown to prevent immediate reopen
+    private float dialogueEndTime;
+    private bool isReminder;
     
     public bool IsShowing => isShowing;
-    public bool JustEnded => Time.time < dialogueEndTime + 0.3f; // 0.3 second cooldown
+    public bool JustEnded => Time.time < dialogueEndTime + 0.3f;
     
     private void Awake()
     {
@@ -30,6 +31,7 @@ public class SimpleDialogueManager : MonoBehaviour
             dialoguePanel.SetActive(false);
     }
     
+    // Regular dialogue - blocks movement
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
         if (dialogue == null) return;
@@ -44,6 +46,7 @@ public class SimpleDialogueManager : MonoBehaviour
         currentLineIndex = 0;
         isShowing = true;
         isLastLineFullyDisplayed = false;
+        isReminder = false;
         
         dialoguePanel.SetActive(true);
         DisablePlayerMovement();
@@ -51,26 +54,55 @@ public class SimpleDialogueManager : MonoBehaviour
         ShowNextLine();
     }
     
+    // Zone reminder - does NOT block movement
+    public void ShowReminder(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        if (dialoguePanel == null) return;
+        if (isReminder) return; // Don't stack reminders
+        
+        currentDialogue = null;
+        currentTrigger = null;
+        isShowing = true;
+        isReminder = true;
+        
+        dialoguePanel.SetActive(true);
+        dialogueText.text = text;
+        // NO DisablePlayerMovement here - player can walk during reminder
+    }
+    
+    public void HideReminder()
+    {
+        if (!isReminder) return;
+        
+        isShowing = false;
+        isReminder = false;
+        
+        if (dialoguePanel != null)
+            dialoguePanel.SetActive(false);
+    }
+    
     private void Update()
     {
         if (!isShowing) return;
         
+        // Reminder mode - doesn't respond to input (auto-closes from ZoneTrigger)
+        if (isReminder) return;
+        
+        // Dialogue mode
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             if (typingCoroutine != null)
             {
-                // Still typing - skip to end of current line
                 StopCoroutine(typingCoroutine);
                 typingCoroutine = null;
                 
-                // Show full line immediately
                 if (currentDialogue != null && currentLineIndex > 0 && 
                     currentLineIndex - 1 < currentDialogue.GetLineCount())
                 {
                     dialogueText.text = currentDialogue.GetLine(currentLineIndex - 1);
                 }
                 
-                // If this was the last line, mark it
                 if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
                 {
                     isLastLineFullyDisplayed = true;
@@ -78,12 +110,10 @@ public class SimpleDialogueManager : MonoBehaviour
             }
             else if (isLastLineFullyDisplayed)
             {
-                // Last line is fully displayed - close dialogue
                 EndDialogue();
             }
             else
             {
-                // Go to next line
                 ShowNextLine();
             }
         }
@@ -123,7 +153,6 @@ public class SimpleDialogueManager : MonoBehaviour
         }
         typingCoroutine = null;
         
-        // Check if this was the last line
         if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
         {
             isLastLineFullyDisplayed = true;
@@ -164,7 +193,7 @@ public class SimpleDialogueManager : MonoBehaviour
     {
         isShowing = false;
         isLastLineFullyDisplayed = false;
-        dialogueEndTime = Time.time; // Set cooldown time
+        dialogueEndTime = Time.time;
         
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
@@ -177,7 +206,6 @@ public class SimpleDialogueManager : MonoBehaviour
             method?.Invoke(currentTrigger, null);
         }
         
-        // Clear references
         currentDialogue = null;
         currentTrigger = null;
     }

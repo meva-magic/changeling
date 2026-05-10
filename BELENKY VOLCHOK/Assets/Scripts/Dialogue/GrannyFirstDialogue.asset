@@ -19,7 +19,7 @@ MonoBehaviour:
   - granny.first
   nextDialogue: {fileID: 11400000, guid: c7f3fc6f411bb104db2c4705b93f6947, type: 2}
   givesQuest: 0
-  questID: 
+  questToGive: {fileID: 0}
   completesQuest: 0
-  completeQuestID: 
+  questToComplete: {fileID: 0}
   voiceSoundName: 

@@ -17,9 +17,9 @@ MonoBehaviour:
       m_TableCollectionName: GUID:c342abb55b204cb4eb2150a794a77900
   lineKeys:
   - man.first
-  nextDialogue: {fileID: 0}
+  nextDialogue: {fileID: 11400000, guid: 7f2fe4e3e20c65042b4f9dede031cbeb, type: 2}
   givesQuest: 1
-  questID: BucketQuest
+  questToGive: {fileID: 11400000, guid: 4eee3b13ee56dec428d4a120c0b06c81, type: 2}
   completesQuest: 0
-  completeQuestID: 
+  questToComplete: {fileID: 0}
   voiceSoundName: Voice

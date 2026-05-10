@@ -131,9 +131,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57fbbd793b4343648a8fa599a3450403, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemID: Item
+  itemID: Bucket
   slowsPlayer: 0
   pickupRange: 2
+  sceneToLoadOnPickup: 
 --- !u!58 &5061784081712622808
 CircleCollider2D:
   m_ObjectHideFlags: 0

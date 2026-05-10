@@ -19,7 +19,7 @@ MonoBehaviour:
   - granny.repeat
   nextDialogue: {fileID: 0}
   givesQuest: 0
-  questID: 
+  questToGive: {fileID: 0}
   completesQuest: 0
-  completeQuestID: 
+  questToComplete: {fileID: 0}
   voiceSoundName: 

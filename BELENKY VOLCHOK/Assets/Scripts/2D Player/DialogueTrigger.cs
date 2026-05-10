@@ -15,10 +15,16 @@ public class SimpleDialogueTrigger : MonoBehaviour
     private bool firstDialogueShown;
     private bool questWasGiven;
     private bool questWasCompleted;
+    private SimpleQuest activeQuestForThisNPC;
     
     private void Start()
     {
         if (indicator != null) indicator.SetActive(false);
+        
+        if (firstDialogue != null && firstDialogue.givesQuest && firstDialogue.questToGive != null)
+            activeQuestForThisNPC = firstDialogue.questToGive;
+        else if (questCompleteDialogue != null && questCompleteDialogue.completesQuest && questCompleteDialogue.questToComplete != null)
+            activeQuestForThisNPC = questCompleteDialogue.questToComplete;
     }
     
     private void Update()
@@ -26,7 +32,7 @@ public class SimpleDialogueTrigger : MonoBehaviour
         if (!playerInRange) return;
         if (SimpleDialogueManager.Instance == null) return;
         if (SimpleDialogueManager.Instance.IsShowing) return;
-        if (SimpleDialogueManager.Instance.JustEnded) return; // Don't reopen immediately
+        if (SimpleDialogueManager.Instance.JustEnded) return;
         
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
@@ -45,7 +51,15 @@ public class SimpleDialogueTrigger : MonoBehaviour
     
     private SimpleDialogue GetCurrentDialogue()
     {
-        // CHECK IF PLAYER HAS QUEST ITEM
+        if (questCompleteDialogue != null && questCompleteDialogue.completesQuest && 
+            questCompleteDialogue.questToComplete != null &&
+            SimpleQuestManager.Instance != null &&
+            SimpleQuestManager.Instance.IsQuestActive(questCompleteDialogue.questToComplete) &&
+            SimpleQuestManager.Instance.CanCompleteQuest(questCompleteDialogue.questToComplete))
+        {
+            return questCompleteDialogue;
+        }
+        
         if (firstDialogue != null && firstDialogue.completesQuest && 
             firstDialogue.questToComplete != null &&
             SimpleQuestManager.Instance != null &&
@@ -55,33 +69,19 @@ public class SimpleDialogueTrigger : MonoBehaviour
             return questCompleteDialogue ?? firstDialogue;
         }
         
-        // Quest was given and still active - show reminder
-        if (questWasGiven && firstDialogue != null && firstDialogue.givesQuest && 
-            firstDialogue.questToGive != null &&
+        if (questWasGiven && activeQuestForThisNPC != null &&
             SimpleQuestManager.Instance != null &&
-            SimpleQuestManager.Instance.IsQuestActive(firstDialogue.questToGive))
+            SimpleQuestManager.Instance.IsQuestActive(activeQuestForThisNPC))
         {
             return reminderDialogue ?? firstDialogue;
         }
         
-        // Completes quest + quest active (but player doesn't have item)
-        if (firstDialogue != null && firstDialogue.completesQuest &&
-            firstDialogue.questToComplete != null &&
-            SimpleQuestManager.Instance != null &&
-            SimpleQuestManager.Instance.IsQuestActive(firstDialogue.questToComplete))
-        {
-            return reminderDialogue ?? firstDialogue;
-        }
-        
-        // Quest already completed - show post quest
         if (questWasCompleted && postQuestDialogue != null)
             return postQuestDialogue;
         
-        // First dialogue was shown - show reminder
         if (firstDialogueShown && reminderDialogue != null)
             return reminderDialogue;
         
-        // First time talking
         return firstDialogue;
     }
     
@@ -89,32 +89,54 @@ public class SimpleDialogueTrigger : MonoBehaviour
     {
         firstDialogueShown = true;
         
-        if (firstDialogue == null) return;
-        
         // GIVE QUEST
-        if (firstDialogue.givesQuest && firstDialogue.questToGive != null)
+        if (firstDialogue != null && firstDialogue.givesQuest && firstDialogue.questToGive != null)
         {
             if (SimpleQuestManager.Instance != null)
             {
                 SimpleQuestManager.Instance.StartQuest(firstDialogue.questToGive);
                 questWasGiven = true;
+                activeQuestForThisNPC = firstDialogue.questToGive;
             }
         }
         
-        // COMPLETE QUEST
-        if (firstDialogue.completesQuest && firstDialogue.questToComplete != null)
+        // COMPLETE QUEST + DESTROY ITEM
+        SimpleDialogue completingDialogue = null;
+        
+        if (firstDialogue != null && firstDialogue.completesQuest && firstDialogue.questToComplete != null)
+            completingDialogue = firstDialogue;
+        else if (questCompleteDialogue != null && questCompleteDialogue.completesQuest && questCompleteDialogue.questToComplete != null)
+            completingDialogue = questCompleteDialogue;
+        
+        if (completingDialogue != null && SimpleQuestManager.Instance != null)
         {
-            if (SimpleQuestManager.Instance != null)
+            if (SimpleQuestManager.Instance.IsQuestActive(completingDialogue.questToComplete) &&
+                SimpleQuestManager.Instance.CanCompleteQuest(completingDialogue.questToComplete))
             {
-                if (SimpleQuestManager.Instance.IsQuestActive(firstDialogue.questToComplete))
-                {
-                    SimpleQuestManager.Instance.CompleteQuest(firstDialogue.questToComplete);
-                    questWasCompleted = true;
-                }
+                // Destroy the quest item the player is holding
+                DestroyQuestItem(completingDialogue.questToComplete.requiredItemID);
+                
+                // Complete the quest
+                SimpleQuestManager.Instance.CompleteQuest(completingDialogue.questToComplete);
+                questWasCompleted = true;
             }
         }
         
         UpdateIndicator();
+    }
+    
+    private void DestroyQuestItem(string itemID)
+    {
+        PlayerCarry playerCarry = FindObjectOfType<PlayerCarry>();
+        if (playerCarry != null && playerCarry.IsCarryingObject)
+        {
+            PickupableItem carriedItem = playerCarry.CarriedObject?.GetComponent<PickupableItem>();
+            if (carriedItem != null && carriedItem.itemID == itemID)
+            {
+                Destroy(playerCarry.CarriedObject);
+                Debug.Log($"Quest item '{itemID}' destroyed");
+            }
+        }
     }
     
     private void OnTriggerEnter2D(Collider2D other)

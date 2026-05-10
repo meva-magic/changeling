@@ -16,10 +16,10 @@ MonoBehaviour:
     m_TableReference:
       m_TableCollectionName: GUID:c342abb55b204cb4eb2150a794a77900
   lineKeys:
-  - man.finishQuest
+  - man.finishDialogue
   nextDialogue: {fileID: 0}
   givesQuest: 0
-  questID: 
+  questToGive: {fileID: 0}
   completesQuest: 1
-  completeQuestID: BucketQuest
+  questToComplete: {fileID: 11400000, guid: 4eee3b13ee56dec428d4a120c0b06c81, type: 2}
   voiceSoundName: Voice

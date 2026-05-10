@@ -35,6 +35,14 @@ MonoBehaviour:
     m_Key: man.finishQuest
     m_Metadata:
       m_Items: []
+  - m_Id: 16904433430528
+    m_Key: reminder.baby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16910188015616
+    m_Key: reminder.bucket
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

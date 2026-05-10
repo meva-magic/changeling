@@ -397,7 +397,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.5, y: 1.5}
+  m_Size: {x: 0.6, y: 1.5}
   m_EdgeRadius: 0
 --- !u!50 &215233862
 Rigidbody2D:
@@ -898,7 +898,7 @@ Transform:
   m_GameObject: {fileID: 676710433}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 13, y: 0, z: -10}
+  m_LocalPosition: {x: 13.3, y: 0, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -967,19 +967,7 @@ MonoBehaviour:
       m_Calls: []
   onPlayerExitZone:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1587690570}
-        m_TargetAssemblyTypeName: FairyJumpscare, Assembly-CSharp
-        m_MethodName: TriggerBabySwap
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
   triggerExitOnce: 0
 --- !u!1 &697190451
 GameObject:
@@ -1331,7 +1319,7 @@ MonoBehaviour:
   itemPrefab: {fileID: 6730024437310989073, guid: df74134a5ddbcc044837084e881bba83,
     type: 3}
   spawnPoint: {fileID: 958478}
-  clickProgress: 2
+  clickProgress: 20
   decayPerSecond: 5
   minigameCanvas: {fileID: 216822750}
   progressSlider: {fileID: 2650592079517786549}
@@ -2496,7 +2484,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1587690570
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3250,7 +3238,7 @@ MonoBehaviour:
   reminderDialogue: {fileID: 11400000, guid: 7f2fe4e3e20c65042b4f9dede031cbeb, type: 2}
   questCompleteDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3,
     type: 2}
-  postQuestDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3, type: 2}
+  postQuestDialogue: {fileID: 11400000, guid: 47dc0ba011d463f4fa20d03aab7139ba, type: 2}
   indicator: {fileID: 845921181}
 --- !u!1 &2043455246
 GameObject:
