@@ -641,13 +641,13 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1864867429}
+  - {fileID: 845921182}
   - {fileID: 1123935374}
   - {fileID: 216822751}
   - {fileID: 1207639856}
   - {fileID: 522773827}
   - {fileID: 396829569}
   - {fileID: 1779665348578628084}
-  - {fileID: 845921182}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2701,7 +2701,6 @@ MonoBehaviour:
   questCompleteDialogue: {fileID: 0}
   postQuestDialogue: {fileID: 0}
   indicator: {fileID: 845921181}
-  useLocalization: 0
 --- !u!1 &1746939561
 GameObject:
   m_ObjectHideFlags: 0
@@ -3207,7 +3206,6 @@ MonoBehaviour:
     type: 2}
   postQuestDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3, type: 2}
   indicator: {fileID: 845921181}
-  useLocalization: 0
 --- !u!1 &2043455246
 GameObject:
   m_ObjectHideFlags: 0

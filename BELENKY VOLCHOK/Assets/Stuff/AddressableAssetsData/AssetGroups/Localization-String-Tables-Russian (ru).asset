@@ -42,6 +42,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-ru
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b19397fd7912d6a4c9944c741f709187
+    m_Address: NPC Dialogue_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: bd7881e06f3c3cb49b44c41c1dd792ca
     m_Address: Menu Labels_ru
     m_ReadOnly: 1

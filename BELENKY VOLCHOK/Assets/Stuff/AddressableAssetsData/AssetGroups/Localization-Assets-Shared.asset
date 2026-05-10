@@ -32,6 +32,11 @@ MonoBehaviour:
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c342abb55b204cb4eb2150a794a77900
+    m_Address: Assets/Localization/Tables/NPC Dialogue Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c55a64cd0820faf4494e4b496bb6b768
     m_Address: Assets/Locales/Tables/Settings Labels Shared Data.asset
     m_ReadOnly: 1

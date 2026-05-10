@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.Localization.Settings;
+using System.Collections;
 
 public class SettingsPanel : MonoBehaviour
 {
@@ -23,6 +25,7 @@ public class SettingsPanel : MonoBehaviour
     
     private const string VOLUME_KEY = "Volume";
     private const string SOUND_KEY = "SoundOn";
+    private const string LANGUAGE_KEY = "Language";
     
     private void Start()
     {
@@ -39,15 +42,44 @@ public class SettingsPanel : MonoBehaviour
         if (soundToggleButton != null)
             soundToggleButton.onClick.AddListener(ToggleSound);
         
-        // Language listeners - direct call to LanguageManager
+        // Language listeners - direct locale change
         if (englishButton != null)
-            englishButton.onClick.AddListener(() => LanguageManager.Instance?.SetLanguage(0));
+            englishButton.onClick.AddListener(() => SetLanguage(0)); // English
         
         if (russianButton != null)
-            russianButton.onClick.AddListener(() => LanguageManager.Instance?.SetLanguage(1));
+            russianButton.onClick.AddListener(() => SetLanguage(1)); // Russian
         
         UpdateUI();
         ApplyAudioSettings();
+    }
+    
+    private void SetLanguage(int index)
+    {
+        StartCoroutine(SetLocale(index));
+    }
+    
+    private IEnumerator SetLocale(int index)
+    {
+        // Wait for localization system to be ready
+        yield return LocalizationSettings.InitializationOperation;
+        
+        // Get available locales
+        var locales = LocalizationSettings.AvailableLocales.Locales;
+        
+        if (index < 0 || index >= locales.Count)
+        {
+            Debug.LogWarning($"Locale index {index} out of range. Available: {locales.Count}");
+            yield break;
+        }
+        
+        // Set the locale
+        LocalizationSettings.SelectedLocale = locales[index];
+        
+        // Save preference
+        PlayerPrefs.SetInt(LANGUAGE_KEY, index);
+        PlayerPrefs.Save();
+        
+        Debug.Log($"Language changed to: {locales[index].name}");
     }
     
     private void FixInvalidVolume()
@@ -83,10 +115,7 @@ public class SettingsPanel : MonoBehaviour
     private void UpdateUI()
     {
         if (volumeSlider != null)
-        {
             volumeSlider.interactable = isSoundOn;
-            volumeSlider.value = currentVolume * 100f;
-        }
         
         if (soundButtonImage != null)
             soundButtonImage.sprite = isSoundOn ? soundOnSprite : soundOffSprite;
@@ -114,5 +143,21 @@ public class SettingsPanel : MonoBehaviour
     {
         currentVolume = PlayerPrefs.GetFloat(VOLUME_KEY, 1f);
         isSoundOn = PlayerPrefs.GetInt(SOUND_KEY, 1) == 1;
+        
+        // Load saved language
+        int savedLanguage = PlayerPrefs.GetInt(LANGUAGE_KEY, 0);
+        StartCoroutine(LoadLocale(savedLanguage));
+    }
+    
+    private IEnumerator LoadLocale(int index)
+    {
+        yield return LocalizationSettings.InitializationOperation;
+        
+        var locales = LocalizationSettings.AvailableLocales.Locales;
+        
+        if (index >= 0 && index < locales.Count)
+        {
+            LocalizationSettings.SelectedLocale = locales[index];
+        }
     }
 }

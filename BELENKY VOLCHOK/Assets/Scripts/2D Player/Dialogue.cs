@@ -4,14 +4,9 @@ using UnityEngine.Localization;
 [CreateAssetMenu(fileName = "New Dialogue", menuName = "Simple Dialogue/Dialogue")]
 public class SimpleDialogue : ScriptableObject
 {
-    [Header("Direct Text (leave empty if using localization)")]
-    [TextArea(3, 10)]
-    public string[] dialogueLines;
-    
-    [Header("Localization (optional)")]
-    public bool useLocalization = false;
-    public LocalizedStringTable localizedStringTable;
-    public string[] localizedLineKeys;
+    [Header("Localization")]
+    [SerializeField] private LocalizedStringTable stringTable;
+    [SerializeField] private string[] lineKeys;  // Table entry keys
     
     public SimpleDialogue nextDialogue;
     public bool givesQuest;
@@ -22,36 +17,34 @@ public class SimpleDialogue : ScriptableObject
     
     public string GetLine(int index)
     {
-        // Try localization first
-        if (useLocalization && localizedStringTable != null && localizedLineKeys != null)
+        if (lineKeys == null || index >= lineKeys.Length)
+            return "";
+        
+        if (stringTable == null)
         {
-            if (index < localizedLineKeys.Length)
-            {
-                var table = localizedStringTable.GetTable();
-                if (table != null)
-                {
-                    var entry = table[localizedLineKeys[index]];
-                    if (entry != null)
-                        return entry.LocalizedValue;
-                }
-            }
+            Debug.LogWarning($"String Table not assigned on dialogue '{name}'");
+            return $"[Missing Table: {lineKeys[index]}]";
         }
         
-        // Fall back to direct text
-        if (dialogueLines != null && index < dialogueLines.Length)
-            return dialogueLines[index];
+        var table = stringTable.GetTable();
+        if (table == null)
+        {
+            Debug.LogWarning($"Could not load string table for dialogue '{name}'");
+            return $"[Table Not Loaded: {lineKeys[index]}]";
+        }
         
-        return "";
+        var entry = table[lineKeys[index]];
+        if (entry == null)
+        {
+            Debug.LogWarning($"Key '{lineKeys[index]}' not found in string table");
+            return $"[Missing Key: {lineKeys[index]}]";
+        }
+        
+        return entry.LocalizedValue;
     }
     
     public int GetLineCount()
     {
-        if (useLocalization && localizedLineKeys != null)
-            return localizedLineKeys.Length;
-        
-        if (dialogueLines != null)
-            return dialogueLines.Length;
-        
-        return 0;
+        return lineKeys != null ? lineKeys.Length : 0;
     }
 }
