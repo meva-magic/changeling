@@ -15,8 +15,11 @@ public class SimpleDialogueManager : MonoBehaviour
     private int currentLineIndex;
     private bool isShowing;
     private Coroutine typingCoroutine;
+    private bool isLastLineFullyDisplayed;
+    private float dialogueEndTime; // Cooldown to prevent immediate reopen
     
     public bool IsShowing => isShowing;
+    public bool JustEnded => Time.time < dialogueEndTime + 0.3f; // 0.3 second cooldown
     
     private void Awake()
     {
@@ -29,48 +32,58 @@ public class SimpleDialogueManager : MonoBehaviour
     
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
-        if (dialogue == null)
-        {
-            Debug.LogError("Dialogue is null!");
-            return;
-        }
+        if (dialogue == null) return;
         
         int lineCount = dialogue.GetLineCount();
-        if (lineCount == 0)
-        {
-            Debug.LogError($"Dialogue '{dialogue.name}' has NO lines!");
-            return;
-        }
+        if (lineCount == 0) return;
         
-        if (dialoguePanel == null)
-        {
-            Debug.LogError("Dialogue Panel not assigned!");
-            return;
-        }
+        if (dialoguePanel == null) return;
         
         currentDialogue = dialogue;
         currentTrigger = trigger;
         currentLineIndex = 0;
         isShowing = true;
+        isLastLineFullyDisplayed = false;
         
         dialoguePanel.SetActive(true);
+        DisablePlayerMovement();
+        
         ShowNextLine();
     }
     
     private void Update()
     {
         if (!isShowing) return;
+        
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             if (typingCoroutine != null)
             {
+                // Still typing - skip to end of current line
                 StopCoroutine(typingCoroutine);
-                if (currentDialogue != null && currentLineIndex < currentDialogue.GetLineCount())
-                    dialogueText.text = currentDialogue.GetLine(currentLineIndex);
                 typingCoroutine = null;
+                
+                // Show full line immediately
+                if (currentDialogue != null && currentLineIndex > 0 && 
+                    currentLineIndex - 1 < currentDialogue.GetLineCount())
+                {
+                    dialogueText.text = currentDialogue.GetLine(currentLineIndex - 1);
+                }
+                
+                // If this was the last line, mark it
+                if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
+                {
+                    isLastLineFullyDisplayed = true;
+                }
+            }
+            else if (isLastLineFullyDisplayed)
+            {
+                // Last line is fully displayed - close dialogue
+                EndDialogue();
             }
             else
             {
+                // Go to next line
                 ShowNextLine();
             }
         }
@@ -109,6 +122,12 @@ public class SimpleDialogueManager : MonoBehaviour
             yield return new WaitForSeconds(textSpeed);
         }
         typingCoroutine = null;
+        
+        // Check if this was the last line
+        if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
+        {
+            isLastLineFullyDisplayed = true;
+        }
     }
     
     private void PlayVoiceSound()
@@ -119,16 +138,47 @@ public class SimpleDialogueManager : MonoBehaviour
         AudioManager.instance.Play(currentDialogue.voiceSoundName);
     }
     
+    private void DisablePlayerMovement()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            PlayerMovement movement = player.GetComponent<PlayerMovement>();
+            if (movement != null)
+                movement.enabled = false;
+        }
+    }
+    
+    private void EnablePlayerMovement()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            PlayerMovement movement = player.GetComponent<PlayerMovement>();
+            if (movement != null)
+                movement.enabled = true;
+        }
+    }
+    
     private void EndDialogue()
     {
         isShowing = false;
+        isLastLineFullyDisplayed = false;
+        dialogueEndTime = Time.time; // Set cooldown time
+        
         if (dialoguePanel != null)
             dialoguePanel.SetActive(false);
+        
+        EnablePlayerMovement();
         
         if (currentTrigger != null)
         {
             var method = currentTrigger.GetType().GetMethod("OnDialogueFinished");
             method?.Invoke(currentTrigger, null);
         }
+        
+        // Clear references
+        currentDialogue = null;
+        currentTrigger = null;
     }
 }

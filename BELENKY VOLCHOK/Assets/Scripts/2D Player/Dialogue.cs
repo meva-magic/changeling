@@ -6,13 +6,17 @@ public class SimpleDialogue : ScriptableObject
 {
     [Header("Localization")]
     [SerializeField] private LocalizedStringTable stringTable;
-    [SerializeField] private string[] lineKeys;  // Table entry keys
+    [SerializeField] private string[] lineKeys;
     
     public SimpleDialogue nextDialogue;
+    
+    [Header("Quest Settings")]
     public bool givesQuest;
-    public string questID;
+    public SimpleQuest questToGive;
     public bool completesQuest;
-    public string completeQuestID;
+    public SimpleQuest questToComplete;
+    
+    [Header("Audio")]
     public string voiceSoundName = "";
     
     public string GetLine(int index)
@@ -22,22 +26,22 @@ public class SimpleDialogue : ScriptableObject
         
         if (stringTable == null)
         {
-            Debug.LogWarning($"String Table not assigned on dialogue '{name}'");
-            return $"[Missing Table: {lineKeys[index]}]";
+            Debug.LogWarning($"String Table not assigned on '{name}'");
+            return $"[No Table: {lineKeys[index]}]";
         }
         
         var table = stringTable.GetTable();
         if (table == null)
         {
-            Debug.LogWarning($"Could not load string table for dialogue '{name}'");
-            return $"[Table Not Loaded: {lineKeys[index]}]";
+            Debug.LogWarning($"Could not load table for '{name}'");
+            return $"[Table Error: {lineKeys[index]}]";
         }
         
         var entry = table[lineKeys[index]];
         if (entry == null)
         {
-            Debug.LogWarning($"Key '{lineKeys[index]}' not found in string table");
-            return $"[Missing Key: {lineKeys[index]}]";
+            Debug.LogWarning($"Key '{lineKeys[index]}' not found");
+            return $"[Missing: {lineKeys[index]}]";
         }
         
         return entry.LocalizedValue;

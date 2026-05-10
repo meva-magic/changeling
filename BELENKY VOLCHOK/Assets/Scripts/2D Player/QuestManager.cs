@@ -15,41 +15,68 @@ public class SimpleQuestManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
-        questPanel.SetActive(false);
+        
+        if (questPanel != null)
+            questPanel.SetActive(false);
     }
     
-    public void StartQuest(string questID)
+    public void StartQuest(SimpleQuest quest)
     {
-        SimpleQuest quest = Resources.Load<SimpleQuest>($"Quests/{questID}");
-        if (quest == null) return;
+        if (quest == null)
+        {
+            Debug.LogError("Quest is null!");
+            return;
+        }
+        
         activeQuest = quest;
         questCompleted = false;
-        questPanel.SetActive(true);
-        questDescriptionText.text = quest.description;
+        
+        if (questPanel != null)
+        {
+            questPanel.SetActive(true);
+            
+            Transform parent = questPanel.transform.parent;
+            while (parent != null)
+            {
+                if (!parent.gameObject.activeSelf)
+                    parent.gameObject.SetActive(true);
+                parent = parent.parent;
+            }
+        }
+        
+        if (questDescriptionText != null)
+            questDescriptionText.text = quest.description;
     }
     
-    public bool IsQuestActive(string questID)
+    public bool IsQuestActive(SimpleQuest quest)
     {
-        return activeQuest != null && activeQuest.questID == questID && !questCompleted;
+        if (quest == null) return false;
+        return activeQuest == quest && !questCompleted;
     }
     
-    public bool CanCompleteQuest(string questID)
+    public bool CanCompleteQuest(SimpleQuest quest)
     {
-        if (activeQuest == null || activeQuest.questID != questID) return false;
+        if (quest == null || activeQuest != quest) return false;
+        
         PlayerCarry playerCarry = FindObjectOfType<PlayerCarry>();
         if (playerCarry != null && playerCarry.IsCarryingObject)
         {
             PickupableItem item = playerCarry.CarriedObject?.GetComponent<PickupableItem>();
-            if (item != null && item.itemID == activeQuest.requiredItemID) return true;
+            if (item != null && item.itemID == quest.requiredItemID)
+                return true;
         }
         return false;
     }
     
-    public void CompleteQuest(string questID)
+    public void CompleteQuest(SimpleQuest quest)
     {
-        if (activeQuest == null || activeQuest.questID != questID) return;
+        if (quest == null || activeQuest != quest) return;
+        
         questCompleted = true;
-        questPanel.SetActive(false);
+        
+        if (questPanel != null)
+            questPanel.SetActive(false);
+        
         activeQuest = null;
     }
 }
