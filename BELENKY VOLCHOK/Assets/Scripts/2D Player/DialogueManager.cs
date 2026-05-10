@@ -29,16 +29,16 @@ public class SimpleDialogueManager : MonoBehaviour
     
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
-        // Safety check
         if (dialogue == null)
         {
             Debug.LogError("Dialogue is null!");
             return;
         }
         
-        if (dialogue.dialogueLines == null || dialogue.dialogueLines.Length == 0)
+        int lineCount = dialogue.GetLineCount();
+        if (lineCount == 0)
         {
-            Debug.LogError($"Dialogue '{dialogue.name}' has NO lines! Add dialogue lines in the inspector.");
+            Debug.LogError($"Dialogue '{dialogue.name}' has NO lines!");
             return;
         }
         
@@ -65,8 +65,8 @@ public class SimpleDialogueManager : MonoBehaviour
             if (typingCoroutine != null)
             {
                 StopCoroutine(typingCoroutine);
-                if (currentLineIndex < currentDialogue.dialogueLines.Length)
-                    dialogueText.text = currentDialogue.dialogueLines[currentLineIndex];
+                if (currentDialogue != null && currentLineIndex < currentDialogue.GetLineCount())
+                    dialogueText.text = currentDialogue.GetLine(currentLineIndex);
                 typingCoroutine = null;
             }
             else
@@ -78,16 +78,19 @@ public class SimpleDialogueManager : MonoBehaviour
     
     private void ShowNextLine()
     {
-        if (currentDialogue == null || currentDialogue.dialogueLines == null)
+        if (currentDialogue == null)
         {
             EndDialogue();
             return;
         }
         
-        if (currentLineIndex < currentDialogue.dialogueLines.Length)
+        int lineCount = currentDialogue.GetLineCount();
+        
+        if (currentLineIndex < lineCount)
         {
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-            typingCoroutine = StartCoroutine(TypeText(currentDialogue.dialogueLines[currentLineIndex]));
+            string line = currentDialogue.GetLine(currentLineIndex);
+            typingCoroutine = StartCoroutine(TypeText(line));
             currentLineIndex++;
         }
         else
@@ -102,14 +105,18 @@ public class SimpleDialogueManager : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
-            if (currentDialogue != null && !string.IsNullOrEmpty(currentDialogue.voiceSoundName))
-            {
-                if (AudioManager.instance != null)
-                    AudioManager.instance.Play(currentDialogue.voiceSoundName);
-            }
+            PlayVoiceSound();
             yield return new WaitForSeconds(textSpeed);
         }
         typingCoroutine = null;
+    }
+    
+    private void PlayVoiceSound()
+    {
+        if (currentDialogue == null) return;
+        if (string.IsNullOrEmpty(currentDialogue.voiceSoundName)) return;
+        if (AudioManager.instance == null) return;
+        AudioManager.instance.Play(currentDialogue.voiceSoundName);
     }
     
     private void EndDialogue()

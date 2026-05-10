@@ -429,8 +429,8 @@ MonoBehaviour:
   soundToggleButton: {fileID: 1608588968086499631}
   soundButtonImage: {fileID: 974622320831833039}
   volumePercentText: {fileID: 2316440312248754254}
-  englishButton: {fileID: 1006226395544166427}
-  russianButton: {fileID: 6843593612846898286}
+  englishButton: {fileID: 6843593612846898286}
+  russianButton: {fileID: 1006226395544166427}
   soundOnSprite: {fileID: 21300000, guid: 744f6179968843c43866570ad55e0d86, type: 3}
   soundOffSprite: {fileID: 21300000, guid: 183271aded6b79344968c97bb5cfc2a9, type: 3}
 --- !u!114 &7455384395592015228

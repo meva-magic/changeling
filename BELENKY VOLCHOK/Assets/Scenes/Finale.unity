@@ -2169,7 +2169,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   dialoguePanel: {fileID: 522773826}
   dialogueText: {fileID: 1007655362}
-  textSpeed: 0.1
+  textSpeed: 0.5
 --- !u!114 &1285513307
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2701,7 +2701,6 @@ MonoBehaviour:
   questCompleteDialogue: {fileID: 0}
   postQuestDialogue: {fileID: 0}
   indicator: {fileID: 845921181}
-  useLocalization: 0
 --- !u!1 &1746939561
 GameObject:
   m_ObjectHideFlags: 0
@@ -3207,7 +3206,6 @@ MonoBehaviour:
     type: 2}
   postQuestDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3, type: 2}
   indicator: {fileID: 845921181}
-  useLocalization: 0
 --- !u!1 &2043455246
 GameObject:
   m_ObjectHideFlags: 0

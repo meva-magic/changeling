@@ -12,20 +12,21 @@ public class SimpleDialogueTrigger : MonoBehaviour
     [SerializeField] private GameObject indicator;
     
     private bool playerInRange;
+    private bool firstDialogueShown;
     private bool questWasGiven;
     private bool questWasCompleted;
-    private SimpleDialogue currentDialogue;
-    private Collider2D npcCollider;
-    
-    private void Awake()
-    {
-        npcCollider = GetComponent<Collider2D>();
-    }
+    private string givenQuestID;
+    private string completedQuestID;
     
     private void Start()
     {
         if (indicator != null) indicator.SetActive(false);
-        currentDialogue = firstDialogue;
+        
+        // Store quest IDs for tracking
+        if (firstDialogue != null && firstDialogue.givesQuest)
+            givenQuestID = firstDialogue.questID;
+        if (firstDialogue != null && firstDialogue.completesQuest)
+            completedQuestID = firstDialogue.completeQuestID;
     }
     
     private void Update()
@@ -34,7 +35,6 @@ public class SimpleDialogueTrigger : MonoBehaviour
         if (SimpleDialogueManager.Instance == null) return;
         if (SimpleDialogueManager.Instance.IsShowing) return;
         
-        // Check for interaction input
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             StartConversation();
@@ -44,7 +44,7 @@ public class SimpleDialogueTrigger : MonoBehaviour
     private void StartConversation()
     {
         SimpleDialogue dialogueToShow = GetCurrentDialogue();
-        if (dialogueToShow != null && SimpleDialogueManager.Instance != null)
+        if (dialogueToShow != null)
         {
             SimpleDialogueManager.Instance.ShowDialogue(dialogueToShow, this);
         }
@@ -52,57 +52,74 @@ public class SimpleDialogueTrigger : MonoBehaviour
     
     private SimpleDialogue GetCurrentDialogue()
     {
-        // If gave quest and quest is active - reminder
-        if (questWasGiven && firstDialogue != null && firstDialogue.givesQuest && 
-            SimpleQuestManager.Instance != null && 
-            SimpleQuestManager.Instance.IsQuestActive(firstDialogue.questID))
-        {
-            if (reminderDialogue != null) return reminderDialogue;
-        }
-        
-        // If completes quest and player has item - quest complete
-        if (firstDialogue != null && firstDialogue.completesQuest &&
+        // If this NPC completes a quest and player has the item
+        if (firstDialogue != null && firstDialogue.completesQuest && 
+            !string.IsNullOrEmpty(firstDialogue.completeQuestID) &&
             SimpleQuestManager.Instance != null &&
             SimpleQuestManager.Instance.IsQuestActive(firstDialogue.completeQuestID) &&
             SimpleQuestManager.Instance.CanCompleteQuest(firstDialogue.completeQuestID))
         {
-            if (questCompleteDialogue != null) return questCompleteDialogue;
+            return questCompleteDialogue ?? firstDialogue;
         }
         
-        // If quest completed - post quest
+        // If this NPC gave a quest that's still active
+        if (questWasGiven && !string.IsNullOrEmpty(givenQuestID) &&
+            SimpleQuestManager.Instance != null &&
+            SimpleQuestManager.Instance.IsQuestActive(givenQuestID))
+        {
+            return reminderDialogue ?? firstDialogue;
+        }
+        
+        // If this NPC completes a quest and that quest is active (but player doesn't have item)
+        if (firstDialogue != null && firstDialogue.completesQuest &&
+            !string.IsNullOrEmpty(firstDialogue.completeQuestID) &&
+            SimpleQuestManager.Instance != null &&
+            SimpleQuestManager.Instance.IsQuestActive(firstDialogue.completeQuestID))
+        {
+            return reminderDialogue ?? firstDialogue;
+        }
+        
+        // If quest was completed, show post-quest dialogue
         if (questWasCompleted && postQuestDialogue != null)
             return postQuestDialogue;
         
-        // First time
+        // If first dialogue was already shown and we have a reminder, show reminder
+        if (firstDialogueShown && reminderDialogue != null)
+            return reminderDialogue;
+        
+        // First time - show first dialogue
         return firstDialogue;
     }
     
     public void OnDialogueFinished()
     {
-        if (firstDialogue != null)
+        // Mark first dialogue as shown
+        firstDialogueShown = true;
+        
+        if (firstDialogue == null) return;
+        
+        // Handle quest giving
+        if (firstDialogue.givesQuest && !string.IsNullOrEmpty(firstDialogue.questID))
         {
-            // Check if this dialogue gives a quest
-            if (firstDialogue.givesQuest && !string.IsNullOrEmpty(firstDialogue.questID))
+            if (SimpleQuestManager.Instance != null)
             {
-                if (SimpleQuestManager.Instance != null)
-                {
-                    SimpleQuestManager.Instance.StartQuest(firstDialogue.questID);
-                    questWasGiven = true;
-                }
-            }
-            
-            // Check if this dialogue completes a quest
-            if (firstDialogue.completesQuest && !string.IsNullOrEmpty(firstDialogue.completeQuestID))
-            {
-                if (SimpleQuestManager.Instance != null)
-                {
-                    SimpleQuestManager.Instance.CompleteQuest(firstDialogue.completeQuestID);
-                    questWasCompleted = true;
-                }
+                SimpleQuestManager.Instance.StartQuest(firstDialogue.questID);
+                questWasGiven = true;
+                givenQuestID = firstDialogue.questID;
             }
         }
         
-        // Show indicator again if there's more dialogue available
+        // Handle quest completion
+        if (firstDialogue.completesQuest && !string.IsNullOrEmpty(firstDialogue.completeQuestID))
+        {
+            if (SimpleQuestManager.Instance != null)
+            {
+                SimpleQuestManager.Instance.CompleteQuest(firstDialogue.completeQuestID);
+                questWasCompleted = true;
+                completedQuestID = firstDialogue.completeQuestID;
+            }
+        }
+        
         UpdateIndicator();
     }
     
@@ -129,15 +146,11 @@ public class SimpleDialogueTrigger : MonoBehaviour
         if (indicator == null) return;
         
         bool hasDialogue = firstDialogue != null || 
-                          (questWasGiven && reminderDialogue != null) ||
+                          (firstDialogueShown && reminderDialogue != null) ||
                           (questWasCompleted && postQuestDialogue != null);
         
         indicator.SetActive(playerInRange && hasDialogue);
     }
     
-    // Public method so PlayerCarry can check if player is near this NPC
-    public bool IsPlayerInRange()
-    {
-        return playerInRange;
-    }
+    public bool IsPlayerInRange() { return playerInRange; }
 }
