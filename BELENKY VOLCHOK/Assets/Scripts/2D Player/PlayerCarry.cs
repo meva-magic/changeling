@@ -12,7 +12,6 @@ public class PlayerCarry : MonoBehaviour
     private PlayerMovement playerMovement;
     private float originalMoveSpeed;
     private PickupableItem nearestItem;
-    private Rigidbody2D carriedRb;
     
     public bool IsCarryingObject => carriedObject != null;
     public GameObject CarriedObject => carriedObject;
@@ -27,6 +26,12 @@ public class PlayerCarry : MonoBehaviour
     
     private void Update()
     {
+        // Keep carried object at carry point
+        if (IsCarryingObject && carriedObject != null)
+        {
+            carriedObject.transform.position = carryPoint.position;
+        }
+        
         FindNearestItem();
         UpdatePickupIndicator();
         
@@ -35,11 +40,8 @@ public class PlayerCarry : MonoBehaviour
         
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
-            if (!IsCarryingObject && nearestItem != null)
-            {
-                TryPickupObject();
-                return;
-            }
+            if (IsNearAnyNPC()) return;
+            if (!IsCarryingObject && TryStartNearbyMinigame()) return;
             
             if (IsCarryingObject)
             {
@@ -47,19 +49,12 @@ public class PlayerCarry : MonoBehaviour
                     SwapItems();
                 else
                     DropObject();
-                return;
             }
-            
-            if (TryStartNearbyMinigame()) return;
-            
-            if (IsNearAnyNPC()) return;
+            else
+            {
+                TryPickupObject();
+            }
         }
-    }
-    
-    private void FixedUpdate()
-    {
-        if (carriedObject != null && carriedRb != null)
-            carriedRb.MovePosition(carryPoint.position);
     }
     
     private bool IsNearAnyNPC()
@@ -67,8 +62,7 @@ public class PlayerCarry : MonoBehaviour
         SimpleDialogueTrigger[] npcs = FindObjectsOfType<SimpleDialogueTrigger>();
         foreach (SimpleDialogueTrigger npc in npcs)
         {
-            if (npc.IsPlayerInRange())
-                return true;
+            if (npc.IsPlayerInRange()) return true;
         }
         return false;
     }
@@ -95,14 +89,13 @@ public class PlayerCarry : MonoBehaviour
         if (pickupIndicatorUI == null) return;
         
         bool dialogueActive = SimpleDialogueManager.Instance != null && SimpleDialogueManager.Instance.IsShowing;
-        bool showIndicator = !dialogueActive && !IsCarryingObject && nearestItem != null;
-        pickupIndicatorUI.SetActive(showIndicator);
+        bool nearNPC = IsNearAnyNPC();
+        bool show = !dialogueActive && !nearNPC && (nearestItem != null || IsCarryingObject);
+        pickupIndicatorUI.SetActive(show);
     }
     
     private bool TryStartNearbyMinigame()
     {
-        if (IsCarryingObject) return false;
-        
         Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, 3f);
         foreach (Collider2D hit in hits)
         {
@@ -119,22 +112,23 @@ public class PlayerCarry : MonoBehaviour
     private void TryPickupObject()
     {
         if (nearestItem == null) return;
+        
         carriedObject = nearestItem.gameObject;
         carriedPickupable = nearestItem;
-        carriedRb = carriedObject.GetComponent<Rigidbody2D>();
         nearestItem.OnPickup(carryPoint);
+        
         if (nearestItem.slowsPlayer && playerMovement != null)
             playerMovement.SetMoveSpeed(originalMoveSpeed * slowSpeedMultiplier);
     }
     
     private void SwapItems()
     {
-        Vector3 swapPosition = nearestItem.transform.position;
-        carriedPickupable.OnDrop(swapPosition);
+        // Drop current item at nearest item's position
+        carriedPickupable.OnDrop(nearestItem.transform.position);
         
+        // Pick up new item
         carriedObject = nearestItem.gameObject;
         carriedPickupable = nearestItem;
-        carriedRb = carriedObject.GetComponent<Rigidbody2D>();
         nearestItem.OnPickup(carryPoint);
         
         if (carriedPickupable.slowsPlayer && playerMovement != null)
@@ -146,10 +140,12 @@ public class PlayerCarry : MonoBehaviour
     private void DropObject()
     {
         if (carriedObject == null) return;
+        
         carriedPickupable.OnDrop(dropPoint.position);
         carriedObject = null;
         carriedPickupable = null;
-        carriedRb = null;
-        if (playerMovement != null) playerMovement.SetMoveSpeed(originalMoveSpeed);
+        
+        if (playerMovement != null)
+            playerMovement.SetMoveSpeed(originalMoveSpeed);
     }
 }

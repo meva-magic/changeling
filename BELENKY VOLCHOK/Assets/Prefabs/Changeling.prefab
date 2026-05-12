@@ -50,7 +50,9 @@ MonoBehaviour:
   itemID: Changeling
   slowsPlayer: 1
   pickupRange: 2
-  sceneToLoadOnPickup: Finale
+  onPickupEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!58 &3656758858840420800
 CircleCollider2D:
   m_ObjectHideFlags: 0

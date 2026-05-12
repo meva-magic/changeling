@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class SimpleDialogueTrigger : MonoBehaviour
 {
@@ -10,6 +11,10 @@ public class SimpleDialogueTrigger : MonoBehaviour
     
     [Header("Indicator")]
     [SerializeField] private GameObject indicator;
+    
+    [Header("Events")]
+    [SerializeField] private UnityEvent onQuestStarted;
+    [SerializeField] private UnityEvent onQuestCompleted;
     
     private bool playerInRange;
     private bool firstDialogueShown;
@@ -35,18 +40,14 @@ public class SimpleDialogueTrigger : MonoBehaviour
         if (SimpleDialogueManager.Instance.JustEnded) return;
         
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
-        {
             StartConversation();
-        }
     }
     
     private void StartConversation()
     {
         SimpleDialogue dialogueToShow = GetCurrentDialogue();
         if (dialogueToShow != null)
-        {
             SimpleDialogueManager.Instance.ShowDialogue(dialogueToShow, this);
-        }
     }
     
     private SimpleDialogue GetCurrentDialogue()
@@ -56,25 +57,19 @@ public class SimpleDialogueTrigger : MonoBehaviour
             SimpleQuestManager.Instance != null &&
             SimpleQuestManager.Instance.IsQuestActive(questCompleteDialogue.questToComplete) &&
             SimpleQuestManager.Instance.CanCompleteQuest(questCompleteDialogue.questToComplete))
-        {
             return questCompleteDialogue;
-        }
         
         if (firstDialogue != null && firstDialogue.completesQuest && 
             firstDialogue.questToComplete != null &&
             SimpleQuestManager.Instance != null &&
             SimpleQuestManager.Instance.IsQuestActive(firstDialogue.questToComplete) &&
             SimpleQuestManager.Instance.CanCompleteQuest(firstDialogue.questToComplete))
-        {
             return questCompleteDialogue ?? firstDialogue;
-        }
         
         if (questWasGiven && activeQuestForThisNPC != null &&
             SimpleQuestManager.Instance != null &&
             SimpleQuestManager.Instance.IsQuestActive(activeQuestForThisNPC))
-        {
             return reminderDialogue ?? firstDialogue;
-        }
         
         if (questWasCompleted && postQuestDialogue != null)
             return postQuestDialogue;
@@ -89,7 +84,6 @@ public class SimpleDialogueTrigger : MonoBehaviour
     {
         firstDialogueShown = true;
         
-        // GIVE QUEST
         if (firstDialogue != null && firstDialogue.givesQuest && firstDialogue.questToGive != null)
         {
             if (SimpleQuestManager.Instance != null)
@@ -97,12 +91,11 @@ public class SimpleDialogueTrigger : MonoBehaviour
                 SimpleQuestManager.Instance.StartQuest(firstDialogue.questToGive);
                 questWasGiven = true;
                 activeQuestForThisNPC = firstDialogue.questToGive;
+                onQuestStarted?.Invoke();
             }
         }
         
-        // COMPLETE QUEST + DESTROY ITEM
         SimpleDialogue completingDialogue = null;
-        
         if (firstDialogue != null && firstDialogue.completesQuest && firstDialogue.questToComplete != null)
             completingDialogue = firstDialogue;
         else if (questCompleteDialogue != null && questCompleteDialogue.completesQuest && questCompleteDialogue.questToComplete != null)
@@ -113,12 +106,10 @@ public class SimpleDialogueTrigger : MonoBehaviour
             if (SimpleQuestManager.Instance.IsQuestActive(completingDialogue.questToComplete) &&
                 SimpleQuestManager.Instance.CanCompleteQuest(completingDialogue.questToComplete))
             {
-                // Destroy the quest item the player is holding
                 DestroyQuestItem(completingDialogue.questToComplete.requiredItemID);
-                
-                // Complete the quest
                 SimpleQuestManager.Instance.CompleteQuest(completingDialogue.questToComplete);
                 questWasCompleted = true;
+                onQuestCompleted?.Invoke();
             }
         }
         
@@ -132,10 +123,7 @@ public class SimpleDialogueTrigger : MonoBehaviour
         {
             PickupableItem carriedItem = playerCarry.CarriedObject?.GetComponent<PickupableItem>();
             if (carriedItem != null && carriedItem.itemID == itemID)
-            {
                 Destroy(playerCarry.CarriedObject);
-                Debug.Log($"Quest item '{itemID}' destroyed");
-            }
         }
     }
     
@@ -160,11 +148,9 @@ public class SimpleDialogueTrigger : MonoBehaviour
     private void UpdateIndicator()
     {
         if (indicator == null) return;
-        
         bool hasDialogue = firstDialogue != null || 
                           (firstDialogueShown && reminderDialogue != null) ||
                           (questWasCompleted && postQuestDialogue != null);
-        
         indicator.SetActive(playerInRange && hasDialogue);
     }
     

@@ -3,75 +3,123 @@ using System.Collections;
 
 public class FairyJumpscare : MonoBehaviour
 {
+    [Header("Fairy Visual")]
     [SerializeField] private GameObject fairyVisual;
     [SerializeField] private float appearDuration = 1.5f;
+    
+    [Header("Baby Swap")]
     [SerializeField] private GameObject babyObject;
     [SerializeField] private GameObject changelingPrefab;
-    [SerializeField] private GameObject jumpScareUIImage;
-    [SerializeField] private string fairySoundName = "FairyVoice";
     
-    public float AppearDuration => appearDuration;
+    [Header("Jumpscare Image")]
+    [SerializeField] private GameObject jumpscareImage;
+    [SerializeField] private float jumpscareDuration = 2f;
     
-    public void TriggerBabySwap() { StartCoroutine(BabySwapSequence()); }
-    public void TriggerJumpscare() { StartCoroutine(JumpscareSequence()); }
+    [Header("Next Scene")]
+    [SerializeField] private string nextSceneName;
     
-    private IEnumerator JumpscareSequence()
+    [Header("Audio")]
+    [SerializeField] private string fairyVoiceSound = "FairyVoice";
+    [SerializeField] private string jumpscareSound = "Jumpscare";
+    
+    private bool babySwapped;
+    private GameObject spawnedChangeling;
+    private bool sceneLoading;
+    
+    private void Start()
     {
-        ZoneCamera zoneCam = ZoneCamera.Instance;
-        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
-        
-        if (zoneCam != null) yield return zoneCam.FadeToBlack();
-        if (fairyVisual != null) fairyVisual.SetActive(true);
-        PlaySound();
-        if (zoneCam != null) yield return zoneCam.FadeFromBlack();
-        yield return new WaitForSeconds(appearDuration);
-        if (zoneCam != null) yield return zoneCam.FadeToBlack();
         if (fairyVisual != null) fairyVisual.SetActive(false);
-        if (zoneCam != null) yield return zoneCam.FadeFromBlack();
+        if (jumpscareImage != null) jumpscareImage.SetActive(false);
+    }
+    
+    private void Update()
+    {
+        if (!babySwapped || sceneLoading) return;
+        
+        if (spawnedChangeling != null)
+        {
+            PickupableItem item = spawnedChangeling.GetComponent<PickupableItem>();
+            if (item != null && item.IsBeingCarried)
+            {
+                sceneLoading = true;
+                Debug.Log("[Fairy] Changeling picked up! Show jumpscare!");
+                StartCoroutine(JumpscareSequence());
+            }
+        }
+    }
+    
+    public void OnLeaveZone2()
+    {
+        StartCoroutine(BabySwapSequence());
+    }
+    
+    public void OnReturnToZone2()
+    {
+        StartCoroutine(FairyAppearsSequence());
     }
     
     private IEnumerator BabySwapSequence()
     {
-        ZoneCamera zoneCam = ZoneCamera.Instance;
-        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
+        if (babyObject == null || changelingPrefab == null) yield break;
         
-        if (zoneCam != null) yield return zoneCam.FadeToBlack();
-        if (fairyVisual != null) fairyVisual.SetActive(true);
-        PlaySound();
-        yield return new WaitForSeconds(1.5f);
-        
-        Vector3 babyPosition = babyObject != null ? babyObject.transform.position : Vector3.zero;
-        if (babyObject != null) Destroy(babyObject);
-        if (changelingPrefab != null)
-            Instantiate(changelingPrefab, babyPosition, Quaternion.identity);
-        
-        if (fairyVisual != null) fairyVisual.SetActive(false);
-        if (zoneCam != null) yield return zoneCam.FadeFromBlack();
+        Vector3 babyPos = babyObject.transform.position;
+        Destroy(babyObject);
+        spawnedChangeling = Instantiate(changelingPrefab, babyPos, Quaternion.identity);
+        babySwapped = true;
     }
     
-    public void TriggerOvenJumpscare()
+    private IEnumerator FairyAppearsSequence()
     {
-        StartCoroutine(OvenJumpscareSequence());
-    }
-    
-    private IEnumerator OvenJumpscareSequence()
-    {
-        ZoneCamera zoneCam = ZoneCamera.Instance;
-        if (zoneCam == null) zoneCam = FindObjectOfType<ZoneCamera>();
+        if (!babySwapped || fairyVisual == null) yield break;
+        
+        ZoneCamera zoneCam = FindZoneCamera();
         
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
-        if (jumpScareUIImage != null) jumpScareUIImage.SetActive(true);
-        PlaySound();
+        fairyVisual.SetActive(true);
+        PlaySound(fairyVoiceSound);
         if (zoneCam != null) yield return zoneCam.FadeFromBlack();
+        
         yield return new WaitForSeconds(appearDuration);
+        
         if (zoneCam != null) yield return zoneCam.FadeToBlack();
-        if (jumpScareUIImage != null) jumpScareUIImage.SetActive(false);
+        fairyVisual.SetActive(false);
         if (zoneCam != null) yield return zoneCam.FadeFromBlack();
     }
     
-    private void PlaySound()
+    // INSTANT jumpscare - NO fade, just pop up
+    private IEnumerator JumpscareSequence()
     {
-        if (AudioManager.instance != null && !string.IsNullOrEmpty(fairySoundName))
-            AudioManager.instance.Play(fairySoundName);
+        // Show jumpscare instantly
+        if (jumpscareImage != null)
+        {
+            jumpscareImage.SetActive(true);
+            Debug.Log("[Fairy] Jumpscare image SHOWN!");
+        }
+        
+        PlaySound(jumpscareSound);
+        
+        // Wait for duration
+        yield return new WaitForSeconds(jumpscareDuration);
+        
+        // Load next scene
+        if (!string.IsNullOrEmpty(nextSceneName))
+        {
+            Debug.Log($"[Fairy] Loading scene: {nextSceneName}");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
+        }
+    }
+    
+    private void PlaySound(string soundName)
+    {
+        if (string.IsNullOrEmpty(soundName)) return;
+        if (AudioManager.instance != null)
+            AudioManager.instance.Play(soundName);
+    }
+    
+    private ZoneCamera FindZoneCamera()
+    {
+        ZoneCamera cam = ZoneCamera.Instance;
+        if (cam == null) cam = FindObjectOfType<ZoneCamera>();
+        return cam;
     }
 }

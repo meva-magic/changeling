@@ -13,23 +13,21 @@ public class ClickerMinigame : MonoBehaviour
     
     private float currentProgress;
     private bool minigameActive;
-    private bool isCompleted;
     
-    private void Start() 
-    { 
-        if (minigameCanvas != null) minigameCanvas.SetActive(false); 
+    private void Start()
+    {
+        if (minigameCanvas != null) minigameCanvas.SetActive(false);
     }
     
     private void Update()
     {
-        if (!minigameActive || isCompleted) return;
+        if (!minigameActive) return;
         
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
         {
             currentProgress += clickProgress;
             currentProgress = Mathf.Clamp(currentProgress, 0f, 100f);
             if (progressSlider != null) progressSlider.value = currentProgress / 100f;
-            
             if (currentProgress >= 100f) CompleteMinigame();
         }
         
@@ -40,36 +38,28 @@ public class ClickerMinigame : MonoBehaviour
     
     public void StartMinigame()
     {
-        if (minigameActive || isCompleted) return;
-        
+        if (minigameActive) return;
         minigameActive = true;
         currentProgress = 0f;
-        minigameCanvas.SetActive(true);
-        progressSlider.value = 0f;
-        if (playerMovement != null) playerMovement.InputBlocked = true;
+        if (minigameCanvas != null) minigameCanvas.SetActive(true);
+        if (progressSlider != null) progressSlider.value = 0f;
+        if (playerMovement != null) playerMovement.enabled = false;
     }
     
     private void CompleteMinigame()
     {
         minigameActive = false;
-        isCompleted = true;
-        minigameCanvas.SetActive(false);
+        
+        if (minigameCanvas != null) minigameCanvas.SetActive(false);
         
         if (itemPrefab != null && spawnPoint != null)
-            Instantiate(itemPrefab, spawnPoint.position, Quaternion.identity);
-        
-        if (playerMovement != null) playerMovement.InputBlocked = false;
-    }
-    
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (!other.CompareTag("Player")) return;
-        
-        if (minigameActive && !isCompleted)
         {
-            minigameActive = false;
-            minigameCanvas.SetActive(false);
-            if (playerMovement != null) playerMovement.InputBlocked = false;
+            Instantiate(itemPrefab, spawnPoint.position, Quaternion.identity);
         }
+        
+        if (playerMovement != null) playerMovement.enabled = true;
+        
+        // Destroy the minigame object after use
+        Destroy(gameObject);
     }
 }

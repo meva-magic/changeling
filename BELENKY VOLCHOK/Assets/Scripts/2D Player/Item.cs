@@ -1,22 +1,23 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 public class PickupableItem : MonoBehaviour
 {
     public string itemID;
     public bool slowsPlayer;
     public float pickupRange = 2f;
-    [SerializeField] private string sceneToLoadOnPickup = "";
+    
+    [Header("Events")]
+    public UnityEvent onPickupEvent;
     
     private bool isBeingCarried;
     private Collider2D itemCollider;
-    private Rigidbody2D itemRb;
     
     public bool IsBeingCarried => isBeingCarried;
     
-    private void Awake() 
-    { 
+    private void Awake()
+    {
         itemCollider = GetComponent<Collider2D>();
-        itemRb = GetComponent<Rigidbody2D>();
     }
     
     public void OnPickup(Transform carryPoint)
@@ -26,23 +27,11 @@ public class PickupableItem : MonoBehaviour
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
         
-        if (itemCollider != null) 
-            itemCollider.enabled = false;
+        if (itemCollider != null) itemCollider.enabled = false;
         
-        if (itemRb != null)
-        {
-            itemRb.isKinematic = true;
-            itemRb.velocity = Vector2.zero;
-        }
-        
-        if (!string.IsNullOrEmpty(sceneToLoadOnPickup))
-        {
-            SceneLoader loader = FindObjectOfType<SceneLoader>();
-            if (loader != null)
-                loader.LoadScene(sceneToLoadOnPickup);
-            else
-                UnityEngine.SceneManagement.SceneManager.LoadScene(sceneToLoadOnPickup);
-        }
+        // Fire event
+        onPickupEvent?.Invoke();
+        Debug.Log($"[PickupableItem] Picked up: {itemID}, event fired: {onPickupEvent.GetPersistentEventCount()} listeners");
     }
     
     public void OnDrop(Vector3 position)
@@ -50,14 +39,8 @@ public class PickupableItem : MonoBehaviour
         isBeingCarried = false;
         transform.SetParent(null);
         transform.position = position;
+        transform.rotation = Quaternion.identity;
         
-        if (itemCollider != null) 
-            itemCollider.enabled = true;
-        
-        if (itemRb != null)
-        {
-            itemRb.isKinematic = false;
-            itemRb.velocity = Vector2.zero;
-        }
+        if (itemCollider != null) itemCollider.enabled = true;
     }
 }

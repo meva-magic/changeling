@@ -7,7 +7,7 @@ public class DoomBob : MonoBehaviour
     [SerializeField] private float walkBobAmount = 0.1f;
     [SerializeField] private float idleBobAmount = 0.02f;
     [SerializeField] private float idleSpeed = 0.5f;
-    [SerializeField] private float handSwayAmount = 3f;
+    [SerializeField] private float handSwayAmount = 8f;
     
     private Vector3 camStart;
     private Vector2[] handsStart;
@@ -58,8 +58,9 @@ public class DoomBob : MonoBehaviour
                 for(int i = 0; i < hands.Length; i++)
                 {
                     if(hands[i] == null) continue;
-                    float swayX = Mathf.Sin(timer * 0.3f + i) * handSwayAmount;
-                    hands[i].anchoredPosition = handsStart[i] + new Vector2(x * 40f + swayX, y * 40f);
+                    float swayX = Mathf.Sin(timer * 0.7f + i) * handSwayAmount;
+                    float swayY = Mathf.Cos(timer * 0.5f + i) * handSwayAmount * 0.3f;
+                    hands[i].anchoredPosition = handsStart[i] + new Vector2(x * 40f + swayX, y * 40f + swayY);
                 }
             }
         }
@@ -76,8 +77,9 @@ public class DoomBob : MonoBehaviour
                 for(int i = 0; i < hands.Length; i++)
                 {
                     if(hands[i] == null) continue;
-                    float swayX = Mathf.Sin(idleTimer * 0.3f + i) * handSwayAmount * 0.5f;
-                    hands[i].anchoredPosition = handsStart[i] + new Vector2(x * 40f + swayX, y * 40f);
+                    float swayX = Mathf.Sin(idleTimer * 0.7f + i) * handSwayAmount * 0.6f;
+                    float swayY = Mathf.Cos(idleTimer * 0.5f + i) * handSwayAmount * 0.2f;
+                    hands[i].anchoredPosition = handsStart[i] + new Vector2(x * 40f + swayX, y * 40f + swayY);
                 }
             }
         }
