@@ -1415,7 +1415,7 @@ Transform:
   m_GameObject: {fileID: 311529344}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -100, y: -14.9, z: -100}
+  m_LocalPosition: {x: -71.5, y: -14.9, z: -78.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2163,9 +2163,6 @@ MonoBehaviour:
   holdStartSoundName: CurtainHoldStart
   closeCompleteSoundName: CurtainClose
   cancelSoundName: CurtainCancel
-  interactionNameKey: curtain
-  tooFarSuffixKey: interaction_too_far_suffix
-  holdSuffixKey: curtain_hold_suffix
 --- !u!1 &428455722
 GameObject:
   m_ObjectHideFlags: 0
@@ -2392,6 +2389,9 @@ MonoBehaviour:
   messagePanel: {fileID: 1834267478}
   messageText: {fileID: 2055988976}
   defaultDisplayDuration: 3
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: 
 --- !u!114 &447846231
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2408,6 +2408,9 @@ MonoBehaviour:
   questWindow: {fileID: 228194349}
   questObjectiveText: {fileID: 830538079}
   questProgressText: {fileID: 906951250}
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: 
 --- !u!114 &447846232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2476,7 +2479,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   hintUpdateDelay: 0.1
-  interactionKeyTextKey: hint.interaction
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: GUID:59ebfe635b3c07947a97ea4f65aa2a8b
+  interactionKey: hint.interaction
 --- !u!1 &449035259
 GameObject:
   m_ObjectHideFlags: 0
@@ -9516,6 +9522,42 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 819015936}
   m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &823985910
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 823985911}
+  m_Layer: 0
+  m_Name: Logs
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &823985911
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 823985910}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -7.7, y: 0, z: 1.8}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5138699260480629519}
+  - {fileID: 1813287362}
+  - {fileID: 1947924028}
+  - {fileID: 992144792}
+  - {fileID: 1556393996}
+  m_Father: {fileID: 1077883712}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &830538077
 GameObject:
   m_ObjectHideFlags: 0
@@ -10603,22 +10645,22 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1077883712}
+    m_TransformParent: {fileID: 823985911}
     m_Modifications:
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.7200003
+      value: 19.2
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.0699997
+      value: -4.15
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.419998
+      value: -26.599998
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
@@ -11045,7 +11087,7 @@ Transform:
   m_GameObject: {fileID: 1074075658}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 100, y: 16.57, z: 100}
+  m_LocalPosition: {x: 69.9, y: 18.7, z: 75}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -11082,12 +11124,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5138699260480629519}
-  - {fileID: 1813287362}
-  - {fileID: 1947924028}
-  - {fileID: 992144792}
-  - {fileID: 1556393996}
   - {fileID: 48275067}
+  - {fileID: 823985911}
   m_Father: {fileID: 1787429539}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1089661512
@@ -12204,9 +12242,6 @@ MonoBehaviour:
   holdStartSoundName: CurtainHoldStart
   closeCompleteSoundName: CurtainClose
   cancelSoundName: CurtainCancel
-  interactionNameKey: curtain
-  tooFarSuffixKey: interaction_too_far_suffix
-  holdSuffixKey: curtain_hold_suffix
 --- !u!1001 &1324011398
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13177,22 +13212,22 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1077883712}
+    m_TransformParent: {fileID: 823985911}
     m_Modifications:
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.7200003
+      value: 19.2
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.0699997
+      value: -4.15
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.419998
+      value: -26.599998
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
@@ -13716,7 +13751,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5fc5e422ef083884fb5a71d7e5535838, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  interactionNameKey: fireplace
   fireParticle: {fileID: 0}
   firewoodModel: {fileID: 1873841246}
   weightPerClick: 20
@@ -13726,7 +13760,6 @@ MonoBehaviour:
   interactionRange: 3
   lightSoundName: FireLightSound
   failSoundName: FailSound
-  tooFarSuffixKey: interaction_too_far_suffix
 --- !u!1 &1744472609
 GameObject:
   m_ObjectHideFlags: 0
@@ -14197,22 +14230,22 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1077883712}
+    m_TransformParent: {fileID: 823985911}
     m_Modifications:
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.7200003
+      value: 19.2
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.0699997
+      value: -4.15
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.419998
+      value: -26.599998
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
@@ -14360,9 +14393,6 @@ MonoBehaviour:
   holdStartSoundName: CurtainHoldStart
   closeCompleteSoundName: CurtainClose
   cancelSoundName: CurtainCancel
-  interactionNameKey: curtain
-  tooFarSuffixKey: interaction_too_far_suffix
-  holdSuffixKey: curtain_hold_suffix
 --- !u!1 &1819428211
 GameObject:
   m_ObjectHideFlags: 0
@@ -15138,22 +15168,22 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1077883712}
+    m_TransformParent: {fileID: 823985911}
     m_Modifications:
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.7200003
+      value: 19.2
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.0699997
+      value: -4.15
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.419998
+      value: -26.599998
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
@@ -16894,7 +16924,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5da275c434bdfb84398affb5804ad46f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  candleNameKey: candle
   candleLight: {fileID: 0}
   fireParticle: {fileID: 0}
   maxBurnTime: 15
@@ -16910,10 +16939,9 @@ MonoBehaviour:
   messageDuration: 3
   extinguishSoundName: ExtinguishSound
   relightSoundName: RelightSound
-  tooFarSuffixKey: interaction_too_far_suffix
-  waitSuffixKey: candle_wait_suffix
-  litSuffixKey: candle_lit_suffix
-  outSuffixKey: candle_out_suffix
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: GUID:59ebfe635b3c07947a97ea4f65aa2a8b
 --- !u!1 &3645505038261423856
 GameObject:
   m_ObjectHideFlags: 0
@@ -17238,7 +17266,7 @@ GameObject:
   - component: {fileID: 152895404006116529}
   - component: {fileID: 5435706726363487993}
   - component: {fileID: 5435706726363487992}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: cradle
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17855,22 +17883,22 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 1077883712}
+    m_TransformParent: {fileID: 823985911}
     m_Modifications:
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.72
+      value: 19.2
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.07
+      value: -4.15
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}
       propertyPath: m_LocalPosition.z
-      value: -4.42
+      value: -26.599998
       objectReference: {fileID: 0}
     - target: {fileID: 5062038819096786627, guid: c770eb751687e1a44b8b4d7b23ae3c7a,
         type: 3}

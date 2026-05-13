@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.Localization;
 
 public class InteractionHint : MonoBehaviour
 {
@@ -14,13 +15,14 @@ public class InteractionHint : MonoBehaviour
     public LayerMask interactableLayer = -1;
     public float hintUpdateDelay = 0.1f;
     
-    [Header("Localization Keys")]
-    public string interactionKeyTextKey = "interaction_key_hint";
+    [Header("Localization")]
+    public LocalizedStringTable stringTable; // This gives you a dropdown!
+    public string interactionKey = "hint.interaction";
     
     private Camera mainCamera;
     private GameObject currentTarget;
-    private IInteractable currentInteractable;
     private float lastUpdateTime;
+    private string cachedLocalizedText = "";
     
     private void Awake()
     {
@@ -38,6 +40,38 @@ public class InteractionHint : MonoBehaviour
     private void Start()
     {
         mainCamera = Camera.main;
+        LoadLocalizedText();
+    }
+    
+    private void LoadLocalizedText()
+    {
+        if (stringTable.IsEmpty)
+        {
+            Debug.LogWarning("String Table not assigned in InteractionHint! Please assign in inspector.");
+            cachedLocalizedText = "E / Space / Mouse";
+            return;
+        }
+        
+        var table = stringTable.GetTable();
+        if (table != null)
+        {
+            var entry = table.GetEntry(interactionKey);
+            if (entry != null)
+            {
+                cachedLocalizedText = entry.GetLocalizedString();
+                Debug.Log($"Localized text loaded: {cachedLocalizedText}");
+            }
+            else
+            {
+                Debug.LogWarning($"Key '{interactionKey}' not found in String Table");
+                cachedLocalizedText = "E / Space / Mouse";
+            }
+        }
+        else
+        {
+            Debug.LogWarning("Could not load String Table");
+            cachedLocalizedText = "E / Space / Mouse";
+        }
     }
     
     private void Update()
@@ -76,14 +110,13 @@ public class InteractionHint : MonoBehaviour
             }
         }
         
-        // Update hint display - only one at a time
+        // Update hint display - show only key hint, no object name
         if (hitObject != null && interactable != null)
         {
             if (currentTarget != hitObject)
             {
                 currentTarget = hitObject;
-                currentInteractable = interactable;
-                ShowHint(interactable.GetInteractionName());
+                ShowHint();
             }
         }
         else
@@ -91,18 +124,16 @@ public class InteractionHint : MonoBehaviour
             if (currentTarget != null)
             {
                 currentTarget = null;
-                currentInteractable = null;
                 HideHint();
             }
         }
     }
     
-    private void ShowHint(string interactionName)
+    private void ShowHint()
     {
         if (hintPanel != null && hintText != null)
         {
-            string keyText = GetLocalizedText(interactionKeyTextKey);
-            hintText.text = $"[{keyText}] {interactionName}";
+            hintText.text = $"[{cachedLocalizedText}]";
             
             if (!hintPanel.activeSelf)
                 hintPanel.SetActive(true);
@@ -115,11 +146,8 @@ public class InteractionHint : MonoBehaviour
             hintPanel.SetActive(false);
     }
     
-    private string GetLocalizedText(string key)
+    public void RefreshLocalization()
     {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null && !string.IsNullOrEmpty(key))
-            return table.GetLocalizedString("UI Table", key);
-        return key;
+        LoadLocalizedText();
     }
 }

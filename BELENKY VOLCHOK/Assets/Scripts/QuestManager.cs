@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
+using UnityEngine.Localization;
 
 public class QuestManager : MonoBehaviour
 {
@@ -14,9 +15,13 @@ public class QuestManager : MonoBehaviour
     public TextMeshProUGUI questObjectiveText;
     public TextMeshProUGUI questProgressText;
     
+    [Header("Localization")]
+    public LocalizedStringTable stringTable; // This gives you a dropdown!
+    
     private int currentStageIndex;
     private int currentProgress;
     private Dictionary<string, int> collectedItems;
+    private bool wasQuestWindowVisible;
     
     private void Awake()
     {
@@ -38,6 +43,31 @@ public class QuestManager : MonoBehaviour
         StartQuest();
     }
     
+    private void Update()
+    {
+        // Check if minigame is active
+        bool isMinigameActive = ClickerMinigameSystem.Instance != null && ClickerMinigameSystem.Instance.IsMinigameActive;
+        
+        if (isMinigameActive)
+        {
+            // Hide quest window during minigame if it was visible
+            if (questWindow != null && questWindow.activeSelf)
+            {
+                wasQuestWindowVisible = true;
+                questWindow.SetActive(false);
+            }
+        }
+        else
+        {
+            // Show quest window after minigame if quest is not complete
+            if (questWindow != null && wasQuestWindowVisible && !IsQuestComplete())
+            {
+                questWindow.SetActive(true);
+                wasQuestWindowVisible = false;
+            }
+        }
+    }
+    
     public void StartQuest()
     {
         if (currentQuest == null)
@@ -54,6 +84,8 @@ public class QuestManager : MonoBehaviour
         // Make sure quest window is visible
         if (questWindow != null)
             questWindow.SetActive(true);
+        
+        wasQuestWindowVisible = true;
         
         Debug.Log($"Quest started: Stage {currentStageIndex}, Required: {GetCurrentStage()?.requiredAmount}, TargetTag: '{GetCurrentStage()?.targetTag}'");
     }
@@ -147,7 +179,8 @@ public class QuestManager : MonoBehaviour
         if (questWindow != null)
         {
             questWindow.SetActive(false);
-            Debug.Log("Quest window closed");
+            wasQuestWindowVisible = false;
+            Debug.Log("Quest window closed - quest complete");
         }
         
         if (questProgressText != null)
@@ -214,9 +247,23 @@ public class QuestManager : MonoBehaviour
     
     private string GetLocalizedText(string key)
     {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null && !string.IsNullOrEmpty(key))
-            return table.GetLocalizedString("UI Table", key);
+        if (stringTable.IsEmpty)
+        {
+            Debug.LogWarning("String Table not assigned in QuestManager! Please assign in inspector.");
+            return key;
+        }
+        
+        var table = stringTable.GetTable();
+        if (table != null)
+        {
+            var entry = table.GetEntry(key);
+            if (entry != null)
+            {
+                return entry.GetLocalizedString();
+            }
+        }
+        
+        Debug.LogWarning($"Key '{key}' not found in String Table");
         return key;
     }
 }

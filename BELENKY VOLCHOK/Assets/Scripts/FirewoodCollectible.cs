@@ -6,9 +6,6 @@ public class FirewoodCollectible : MonoBehaviour, IInteractable
     public string itemTag = "Firewood";
     public float interactionRange = 2f;
     
-    [Header("Localization Keys")]
-    public string interactionNameKey = "firewood";
-    
     private bool collected;
     private Transform playerTransform;
     
@@ -74,13 +71,6 @@ public class FirewoodCollectible : MonoBehaviour, IInteractable
     
     public string GetInteractionName()
     {
-        return GetLocalizedText(interactionNameKey);
-    }
-    
-    private string GetLocalizedText(string key)
-    {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null) return table.GetLocalizedString("UI Table", key);
-        return key;
+        return ""; // No interaction name
     }
 }

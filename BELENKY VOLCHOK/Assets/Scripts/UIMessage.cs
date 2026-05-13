@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.Localization;
 
 public class UIMessageManager : MonoBehaviour
 {
@@ -12,6 +13,9 @@ public class UIMessageManager : MonoBehaviour
     
     [Header("Settings")]
     public float defaultDisplayDuration = 3f;
+    
+    [Header("Localization")]
+    public LocalizedStringTable stringTable; // This gives you a dropdown!
     
     private Coroutine hideCoroutine;
     private bool isShowing = false;
@@ -33,7 +37,6 @@ public class UIMessageManager : MonoBehaviour
     {
         if (isShowing)
         {
-            // Hide on space or mouse click
             if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
             {
                 HideMessage();
@@ -48,6 +51,9 @@ public class UIMessageManager : MonoBehaviour
             return;
         
         string localizedMessage = GetLocalizedText(messageKey);
+        
+        if (string.IsNullOrEmpty(localizedMessage))
+            return;
         
         if (messageText != null)
             messageText.text = localizedMessage;
@@ -83,9 +89,23 @@ public class UIMessageManager : MonoBehaviour
     
     private string GetLocalizedText(string key)
     {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null && !string.IsNullOrEmpty(key))
-            return table.GetLocalizedString("UI Table", key);
+        if (stringTable.IsEmpty)
+        {
+            Debug.LogWarning("String Table not assigned in UIMessageManager! Please assign in inspector.");
+            return key;
+        }
+        
+        var table = stringTable.GetTable();
+        if (table != null)
+        {
+            var entry = table.GetEntry(key);
+            if (entry != null)
+            {
+                return entry.GetLocalizedString();
+            }
+        }
+        
+        Debug.LogWarning($"Key '{key}' not found in String Table");
         return key;
     }
     

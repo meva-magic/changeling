@@ -3,7 +3,6 @@ using UnityEngine;
 public class FireplaceInteract : MonoBehaviour, IInteractable
 {
     [Header("Settings")]
-    public string interactionNameKey = "fireplace";
     public ParticleSystem fireParticle;
     public GameObject firewoodModel;
     public float weightPerClick = 10f;
@@ -154,13 +153,6 @@ public class FireplaceInteract : MonoBehaviour, IInteractable
     
     public string GetInteractionName()
     {
-        return GetLocalizedText(interactionNameKey);
-    }
-    
-    private string GetLocalizedText(string key)
-    {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null) return table.GetLocalizedString("UI Table", key);
-        return key;
+        return ""; // No interaction name
     }
 }

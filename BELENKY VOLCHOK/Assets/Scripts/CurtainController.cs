@@ -26,9 +26,6 @@ public class CurtainController : MonoBehaviour, IInteractable
     public string closeCompleteSoundName = "CurtainClose";
     public string cancelSoundName = "CurtainCancel";
     
-    [Header("Localization Keys")]
-    public string interactionNameKey = "curtain";
-    
     private float currentProgress;
     private bool isHolding;
     private Transform playerTransform;
@@ -42,8 +39,7 @@ public class CurtainController : MonoBehaviour, IInteractable
             playerTransform = player.transform;
         
         // Set initial visual state - OPEN
-        if (openModel != null) openModel.SetActive(true);
-        if (closedModel != null) closedModel.SetActive(false);
+        SetCurtainOpen();
         
         // Setup progress UI
         if (progressPanel != null)
@@ -65,23 +61,20 @@ public class CurtainController : MonoBehaviour, IInteractable
     
     private void Update()
     {
-        // If curtain is defeated and closed, don't do anything
-        if (monsterDefeated) return;
-        
         // Check if player is still holding the interaction key
         bool isStillHolding = Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
         
-        // If not holding and was holding before, reset everything
+        // If not holding and was holding before, open the curtain
         if (!isStillHolding && isHolding)
         {
-            ResetCurtainToOpen();
+            StopHoldingAndOpen();
         }
     }
     
     public void Interact()
     {
-        // Start holding when player interacts
-        if (!isHolding && !monsterDefeated)
+        // Start holding when player interacts (even if monster was defeated, but curtain opens on release)
+        if (!isHolding)
         {
             StartHolding();
         }
@@ -89,14 +82,14 @@ public class CurtainController : MonoBehaviour, IInteractable
     
     private void StartHolding()
     {
-        if (isHolding || monsterDefeated) return;
+        if (isHolding) return;
         
         isHolding = true;
         
         // Check if monster exists
         bool hasMonster = targetWindow != null && targetWindow.HasActiveMonster;
         
-        if (hasMonster)
+        if (hasMonster && !monsterDefeated)
         {
             // Show progress panel
             if (progressPanel != null)
@@ -111,29 +104,28 @@ public class CurtainController : MonoBehaviour, IInteractable
         }
         
         // Close curtain visual immediately when holding
-        if (openModel != null) openModel.SetActive(false);
-        if (closedModel != null) closedModel.SetActive(true);
+        SetCurtainClosed();
     }
     
     private IEnumerator FillRoutine()
     {
-        float fillTimer = 0f;
+        float fillTimer = currentProgress;
         
-        while (isHolding && !monsterDefeated)
+        while (isHolding)
         {
             // Check if player is still holding
             bool isStillHolding = Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
             
             if (!isStillHolding)
             {
-                ResetCurtainToOpen();
+                StopHoldingAndOpen();
                 yield break;
             }
             
             // Check if still in range
             if (!IsInRange())
             {
-                ResetCurtainToOpen();
+                StopHoldingAndOpen();
                 yield break;
             }
             
@@ -141,8 +133,8 @@ public class CurtainController : MonoBehaviour, IInteractable
             bool hasMonster = targetWindow != null && targetWindow.HasActiveMonster;
             if (!hasMonster)
             {
-                // Monster disappeared, just reset to open
-                ResetCurtainToOpen();
+                // Monster disappeared, just open curtain
+                StopHoldingAndOpen();
                 yield break;
             }
             
@@ -151,10 +143,11 @@ public class CurtainController : MonoBehaviour, IInteractable
             currentProgress = Mathf.Min(fillTimer, holdTimeRequired);
             UpdateProgressUI(currentProgress / holdTimeRequired);
             
-            // Check if complete
+            // Check if complete - defeat monster
             if (fillTimer >= holdTimeRequired)
             {
                 DefeatMonster();
+                // Keep curtain closed - don't open until release
                 yield break;
             }
             
@@ -162,10 +155,8 @@ public class CurtainController : MonoBehaviour, IInteractable
         }
     }
     
-    private void ResetCurtainToOpen()
+    private void StopHoldingAndOpen()
     {
-        if (monsterDefeated) return;
-        
         isHolding = false;
         
         if (fillCoroutine != null)
@@ -181,19 +172,20 @@ public class CurtainController : MonoBehaviour, IInteractable
         // Reset progress UI
         UpdateProgressUI(0);
         
-        // ALWAYS open curtain when not holding
-        if (openModel != null) openModel.SetActive(true);
-        if (closedModel != null) closedModel.SetActive(false);
+        // Open curtain when releasing (regardless of monster state)
+        SetCurtainOpen();
         
         // Play cancel sound if there was progress
         if (currentProgress > 0)
             PlaySound(cancelSoundName);
+        
+        // Reset monster defeated flag after releasing (monster will respawn later)
+        monsterDefeated = false;
     }
     
     private void DefeatMonster()
     {
         monsterDefeated = true;
-        isHolding = false;
         
         PlaySound(closeCompleteSoundName);
         
@@ -207,7 +199,18 @@ public class CurtainController : MonoBehaviour, IInteractable
         // Reset progress UI
         UpdateProgressUI(0);
         
-        // Keep curtain closed permanently (monster defeated)
+        // Curtain stays closed after defeating monster
+        // It will only open when player releases the button
+    }
+    
+    private void SetCurtainOpen()
+    {
+        if (openModel != null) openModel.SetActive(true);
+        if (closedModel != null) closedModel.SetActive(false);
+    }
+    
+    private void SetCurtainClosed()
+    {
         if (openModel != null) openModel.SetActive(false);
         if (closedModel != null) closedModel.SetActive(true);
     }
@@ -236,15 +239,7 @@ public class CurtainController : MonoBehaviour, IInteractable
     
     public string GetInteractionName()
     {
-        return GetLocalizedText(interactionNameKey);
-    }
-    
-    private string GetLocalizedText(string key)
-    {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null && !string.IsNullOrEmpty(key))
-            return table.GetLocalizedString("UI Table", key);
-        return key;
+        return ""; // No interaction name
     }
     
     public void ResetCurtain()
@@ -254,10 +249,13 @@ public class CurtainController : MonoBehaviour, IInteractable
         monsterDefeated = false;
         currentProgress = 0;
         
-        if (openModel != null) openModel.SetActive(true);
-        if (closedModel != null) closedModel.SetActive(false);
-        if (progressPanel != null) progressPanel.SetActive(false);
-        if (progressSlider != null) progressSlider.value = 0;
-        if (fillImage != null) fillImage.fillAmount = 0;
+        SetCurtainOpen();
+        
+        if (progressPanel != null)
+            progressPanel.SetActive(false);
+        if (progressSlider != null)
+            progressSlider.value = 0;
+        if (fillImage != null)
+            fillImage.fillAmount = 0;
     }
 }

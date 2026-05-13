@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using UnityEngine.Localization;
 
 public class CandleSystem : MonoBehaviour, IInteractable
 {
     [Header("Candle Settings")]
-    public string candleNameKey = "candle";
     public Light candleLight;
     public ParticleSystem fireParticle;
     public float maxBurnTime = 60f;
@@ -29,6 +29,9 @@ public class CandleSystem : MonoBehaviour, IInteractable
     [Header("Audio")]
     public string extinguishSoundName = "ExtinguishSound";
     public string relightSoundName = "RelightSound";
+    
+    [Header("Localization")]
+    public LocalizedStringTable stringTable; // This gives you a dropdown!
     
     private float currentBurnTime;
     private bool isLit = true;
@@ -191,7 +194,8 @@ public class CandleSystem : MonoBehaviour, IInteractable
         
         if (!hasShownExtinguishMessage && UIMessageManager.Instance != null)
         {
-            UIMessageManager.Instance.ShowMessage(candleExtinguishedMessageKey, messageDuration);
+            string localizedMessage = GetLocalizedText(candleExtinguishedMessageKey);
+            UIMessageManager.Instance.ShowMessage(localizedMessage, messageDuration);
             hasShownExtinguishMessage = true;
         }
     }
@@ -216,23 +220,31 @@ public class CandleSystem : MonoBehaviour, IInteractable
             AudioManager.instance.Play(soundName);
     }
     
-    public string GetInteractionName()
-    {
-        return GetLocalizedText(candleNameKey);
-    }
-    
-    private bool IsInRange()
-    {
-        if (playerTransform == null) return true;
-        float distance = Vector3.Distance(transform.position, playerTransform.position);
-        return distance <= showTimerDistance;
-    }
-    
     private string GetLocalizedText(string key)
     {
-        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
-        if (table != null) return table.GetLocalizedString("UI Table", key);
+        if (stringTable.IsEmpty)
+        {
+            Debug.LogWarning("String Table not assigned in CandleSystem! Please assign in inspector.");
+            return key;
+        }
+        
+        var table = stringTable.GetTable();
+        if (table != null)
+        {
+            var entry = table.GetEntry(key);
+            if (entry != null)
+            {
+                return entry.GetLocalizedString();
+            }
+        }
+        
+        Debug.LogWarning($"Key '{key}' not found in String Table");
         return key;
+    }
+    
+    public string GetInteractionName()
+    {
+        return ""; // No interaction name
     }
     
     private void OnDestroy()
