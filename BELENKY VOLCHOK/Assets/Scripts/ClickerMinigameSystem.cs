@@ -32,8 +32,9 @@ public class ClickerMinigameSystem : MonoBehaviour
     private float currentProgress;
     private bool isMinigameActive;
     private bool waitingForFireEffect;
-    private bool wasCursorLocked;
-    private bool wasCursorVisible;
+    private Vector3 savedPlayerPosition;
+    private Quaternion savedPlayerRotation;
+    private bool playerPositionSaved;
     
     [System.Serializable]
     public class MinigameData
@@ -65,11 +66,13 @@ public class ClickerMinigameSystem : MonoBehaviour
     {
         if (!isMinigameActive || waitingForFireEffect) return;
         
+        // Handle clicks during minigame
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
         {
             OnClick();
         }
         
+        // Handle decay
         if (currentMinigame != null && currentMinigame.decayRate > 0 && currentProgress > 0 && !waitingForFireEffect)
         {
             currentProgress -= currentMinigame.decayRate * Time.deltaTime;
@@ -84,6 +87,7 @@ public class ClickerMinigameSystem : MonoBehaviour
             }
         }
         
+        // Cancel with escape
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             CancelMinigame();
@@ -106,14 +110,13 @@ public class ClickerMinigameSystem : MonoBehaviour
             return;
         }
         
-        // Save current cursor state
-        wasCursorLocked = Cursor.lockState == CursorLockMode.Locked;
-        wasCursorVisible = Cursor.visible;
-        
         currentMinigame = data;
         currentProgress = 0;
         isMinigameActive = true;
         waitingForFireEffect = false;
+        
+        // Save and freeze player completely
+        FreezePlayer();
         
         if (minigamePanel != null)
         {
@@ -127,12 +130,6 @@ public class ClickerMinigameSystem : MonoBehaviour
         }
         
         UpdateSliderAndMatch(0);
-        
-        // Set cursor for minigame
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        
-        DisablePlayerControls();
         
         if (UIMessageManager.Instance != null)
             UIMessageManager.Instance.HideMessage();
@@ -214,7 +211,7 @@ public class ClickerMinigameSystem : MonoBehaviour
         {
             CloseMinigamePanel();
             onCompleteCallback?.Invoke();
-            EnablePlayerControls();
+            UnfreezePlayer();
         }
     }
     
@@ -223,7 +220,7 @@ public class ClickerMinigameSystem : MonoBehaviour
         yield return new WaitForSeconds(delay);
         CloseMinigamePanel();
         onCompleteCallback?.Invoke();
-        EnablePlayerControls();
+        UnfreezePlayer();
         waitingForFireEffect = false;
     }
     
@@ -257,35 +254,96 @@ public class ClickerMinigameSystem : MonoBehaviour
         currentProgress = 0;
         
         onCancelCallback?.Invoke();
-        EnablePlayerControls();
+        UnfreezePlayer();
+    }
+    
+    private void FreezePlayer()
+    {
+        Debug.Log("Freezing player");
+        
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            player = FindObjectOfType<MouseLook>()?.gameObject;
+        }
+        
+        if (player != null)
+        {
+            savedPlayerPosition = player.transform.position;
+            savedPlayerRotation = player.transform.rotation;
+            playerPositionSaved = true;
+            
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+                rb.isKinematic = true;
+            }
+            
+            CharacterController controller = player.GetComponent<CharacterController>();
+            if (controller != null)
+            {
+                controller.enabled = false;
+            }
+            
+            MouseLook mouseLook = player.GetComponent<MouseLook>();
+            if (mouseLook != null) mouseLook.enabled = false;
+            
+            PlayerMove playerMove = player.GetComponent<PlayerMove>();
+            if (playerMove != null) playerMove.enabled = false;
+        }
+        
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        PlayerStateManager stateManager = FindObjectOfType<PlayerStateManager>();
+        if (stateManager != null) stateManager.SetUIState();
+    }
+    
+    private void UnfreezePlayer()
+    {
+        Debug.Log("Unfreezing player");
+        
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null)
+        {
+            player = FindObjectOfType<MouseLook>()?.gameObject;
+        }
+        
+        if (player != null)
+        {
+            if (playerPositionSaved)
+            {
+                player.transform.position = savedPlayerPosition;
+                player.transform.rotation = savedPlayerRotation;
+                playerPositionSaved = false;
+            }
+            
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null) rb.isKinematic = false;
+            
+            CharacterController controller = player.GetComponent<CharacterController>();
+            if (controller != null) controller.enabled = true;
+            
+            MouseLook mouseLook = player.GetComponent<MouseLook>();
+            if (mouseLook != null) mouseLook.enabled = true;
+            
+            PlayerMove playerMove = player.GetComponent<PlayerMove>();
+            if (playerMove != null) playerMove.enabled = true;
+        }
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        
+        PlayerStateManager stateManager = FindObjectOfType<PlayerStateManager>();
+        if (stateManager != null) stateManager.SetGameplayState();
     }
     
     private void PlaySound(string soundName)
     {
         if (AudioManager.instance != null)
             AudioManager.instance.Play(soundName);
-    }
-    
-    private void DisablePlayerControls()
-    {
-        var mouseLook = FindObjectOfType<MouseLook>();
-        var playerMove = FindObjectOfType<PlayerMove>();
-        
-        if (mouseLook != null) mouseLook.enabled = false;
-        if (playerMove != null) playerMove.enabled = false;
-    }
-    
-    private void EnablePlayerControls()
-    {
-        var mouseLook = FindObjectOfType<MouseLook>();
-        var playerMove = FindObjectOfType<PlayerMove>();
-        
-        if (mouseLook != null) mouseLook.enabled = true;
-        if (playerMove != null) playerMove.enabled = true;
-        
-        // Restore previous cursor state or default to locked
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
     
     public bool IsMinigameActive => isMinigameActive;

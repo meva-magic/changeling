@@ -9,7 +9,8 @@ public class FireplaceInteract : MonoBehaviour, IInteractable
     public float weightPerClick = 10f;
     public bool showMatchAnimation = true;
     public bool showFireEffect = true;
-    public float decayRate = 0.5f;
+    public float decayRate = 5f;
+    public float interactionRange = 3f;
     
     [Header("Audio")]
     public string lightSoundName = "FireLightSound";
@@ -17,57 +18,65 @@ public class FireplaceInteract : MonoBehaviour, IInteractable
     
     private bool isLit;
     private bool isLighting;
+    private Transform playerTransform;
+    
+    private void Start()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            playerTransform = player.transform;
+    }
     
     public void Interact()
     {
+        if (!IsInRange())
+        {
+            Debug.Log("Too far from fireplace");
+            return;
+        }
+        
         Debug.Log("Fireplace Interact called");
         
         if (isLit)
         {
-            Debug.Log("Fireplace already lit");
             ShowMessage("fire_already_lit");
             if (!string.IsNullOrEmpty(failSoundName))
                 PlaySound(failSoundName);
             return;
         }
         
-        // Check if wood collection stage is complete
         bool woodCollected = IsWoodCollected();
         Debug.Log($"Wood collected: {woodCollected}");
         
         if (!woodCollected)
         {
-            Debug.Log("Wood not collected, showing message");
             ShowMessage("need_gather_wood");
             if (!string.IsNullOrEmpty(failSoundName))
                 PlaySound(failSoundName);
             return;
         }
         
-        Debug.Log("Starting lighting minigame...");
         StartLightingMinigame();
+    }
+    
+    private bool IsInRange()
+    {
+        if (playerTransform == null) return true;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= interactionRange;
     }
     
     private void StartLightingMinigame()
     {
-        Debug.Log("StartLightingMinigame called");
-        
         if (ClickerMinigameSystem.Instance == null)
         {
-            Debug.LogError("ClickerMinigameSystem.Instance is NULL! Make sure ClickerMinigameSystem is in the scene.");
+            Debug.LogWarning("ClickerMinigameSystem not found!");
             return;
         }
         
-        Debug.Log($"ClickerMinigameSystem.Instance found: {ClickerMinigameSystem.Instance.gameObject.name}");
-        
-        if (isLighting)
-        {
-            Debug.Log("Already lighting, skipping");
-            return;
-        }
+        if (isLighting) return;
         
         isLighting = true;
-        Debug.Log($"Creating minigame data with weightPerClick={weightPerClick}, decayRate={decayRate}");
         
         var data = new ClickerMinigameSystem.MinigameData
         {
@@ -81,81 +90,53 @@ public class FireplaceInteract : MonoBehaviour, IInteractable
             onCancel = OnLightingCancel
         };
         
-        Debug.Log("Calling ClickerMinigameSystem.StartMinigame");
         ClickerMinigameSystem.Instance.StartMinigame(data);
     }
     
     private void OnLightingComplete()
     {
-        Debug.Log("OnLightingComplete called");
         isLighting = false;
         isLit = true;
         
         if (fireParticle != null)
         {
-            Debug.Log("Playing fire particle");
             fireParticle.Play();
-        }
-        else
-        {
-            Debug.Log("fireParticle is null");
         }
         
         if (firewoodModel != null)
         {
-            Debug.Log("Activating firewood model");
             firewoodModel.SetActive(true);
-        }
-        else
-        {
-            Debug.Log("firewoodModel is null");
         }
         
         if (!string.IsNullOrEmpty(lightSoundName))
             PlaySound(lightSoundName);
         
-        Debug.Log("Calling TryCompleteQuestAction");
         QuestManager.Instance?.TryCompleteQuestAction("Fireplace");
     }
     
     private void OnLightingCancel()
     {
-        Debug.Log("OnLightingCancel called");
         isLighting = false;
     }
     
     private bool IsWoodCollected()
     {
-        if (QuestManager.Instance == null)
-        {
-            Debug.Log("QuestManager.Instance is null");
-            return true;
-        }
+        if (QuestManager.Instance == null) return true;
         
         QuestStage stage = QuestManager.Instance.GetCurrentStage();
         
-        if (stage == null)
-        {
-            Debug.Log("Current stage is null");
-            return true;
-        }
-        
-        Debug.Log($"Current stage - TargetTag: '{stage.targetTag}', RequiredAmount: {stage.requiredAmount}");
+        if (stage == null) return true;
         
         if (string.Equals(stage.targetTag, "Fireplace", System.StringComparison.OrdinalIgnoreCase))
         {
-            Debug.Log("Current stage is Fireplace - wood collection is complete, can light fire!");
             return true;
         }
         
         if (string.Equals(stage.targetTag, "Firewood", System.StringComparison.OrdinalIgnoreCase) && stage.requiredAmount > 0)
         {
-            bool isComplete = QuestManager.Instance.IsStageComplete();
-            Debug.Log($"Still in wood collection stage. IsComplete: {isComplete}");
-            return isComplete;
+            return QuestManager.Instance.IsStageComplete();
         }
         
-        Debug.Log("Unknown stage state - returning false");
         return false;
     }
     

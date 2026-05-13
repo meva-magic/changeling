@@ -50,7 +50,12 @@ public class QuestManager : MonoBehaviour
         currentProgress = 0;
         collectedItems.Clear();
         UpdateQuestUI();
-        Debug.Log($"Quest started: Stage {currentStageIndex}, Required: {GetCurrentStage()?.requiredAmount}, TargetTag: {GetCurrentStage()?.targetTag}");
+        
+        // Make sure quest window is visible
+        if (questWindow != null)
+            questWindow.SetActive(true);
+        
+        Debug.Log($"Quest started: Stage {currentStageIndex}, Required: {GetCurrentStage()?.requiredAmount}, TargetTag: '{GetCurrentStage()?.targetTag}'");
     }
     
     public void CollectItem(string itemTag, int amount = 1)
@@ -62,7 +67,7 @@ public class QuestManager : MonoBehaviour
             return;
         }
         
-        Debug.Log($"CollectItem called: tag={itemTag}, stage.targetTag={stage.targetTag}, currentProgress={currentProgress}, required={stage.requiredAmount}");
+        Debug.Log($"CollectItem called: tag={itemTag}, stage.targetTag='{stage.targetTag}', currentProgress={currentProgress}, required={stage.requiredAmount}");
         
         if (stage.targetTag == itemTag && currentProgress < stage.requiredAmount)
         {
@@ -83,7 +88,7 @@ public class QuestManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Cannot collect: stage.targetTag={stage.targetTag}, itemTag={itemTag}, currentProgress={currentProgress}, required={stage.requiredAmount}");
+            Debug.Log($"Cannot collect: stage.targetTag='{stage.targetTag}', itemTag={itemTag}, currentProgress={currentProgress}, required={stage.requiredAmount}");
         }
     }
     
@@ -92,17 +97,12 @@ public class QuestManager : MonoBehaviour
         QuestStage stage = GetCurrentStage();
         if (stage == null) return false;
         
-        Debug.Log($"CanInteractWith: objectTag={objectTag}, stage.targetTag={stage.targetTag}, required={stage.requiredAmount}");
+        Debug.Log($"CanInteractWith: objectTag={objectTag}, stage.targetTag='{stage.targetTag}', required={stage.requiredAmount}");
         
-        // If we're in a stage that requires collecting items (requiredAmount > 0)
-        if (stage.requiredAmount > 0)
+        if (stage.requiredAmount > 0 && stage.targetTag != objectTag)
         {
-            // Only allow interaction with the target tag
-            if (stage.targetTag != objectTag)
-            {
-                ShowMessage("need_gather_wood");
-                return false;
-            }
+            ShowMessage("need_gather_wood");
+            return false;
         }
         
         return true;
@@ -113,9 +113,8 @@ public class QuestManager : MonoBehaviour
         QuestStage stage = GetCurrentStage();
         if (stage == null) return;
         
-        Debug.Log($"TryCompleteQuestAction: objectTag={objectTag}, stage.targetTag={stage.targetTag}, required={stage.requiredAmount}");
+        Debug.Log($"TryCompleteQuestAction: objectTag={objectTag}, stage.targetTag='{stage.targetTag}', required={stage.requiredAmount}");
         
-        // Only complete if target matches and requiredAmount is 0 (action stage)
         if (stage.targetTag == objectTag && stage.requiredAmount == 0)
         {
             Debug.Log("Action stage complete!");
@@ -136,13 +135,21 @@ public class QuestManager : MonoBehaviour
             currentProgress = 0;
             collectedItems.Clear();
             UpdateQuestUI();
-            Debug.Log($"Moved to stage {currentStageIndex}, Required: {GetCurrentStage()?.requiredAmount}, TargetTag: {GetCurrentStage()?.targetTag}");
+            Debug.Log($"Moved to stage {currentStageIndex}, Required: {GetCurrentStage()?.requiredAmount}, TargetTag: '{GetCurrentStage()?.targetTag}'");
         }
     }
     
     private void CompleteQuest()
     {
         Debug.Log("Quest completed!");
+        
+        // Close quest window when quest is complete
+        if (questWindow != null)
+        {
+            questWindow.SetActive(false);
+            Debug.Log("Quest window closed");
+        }
+        
         if (questProgressText != null)
             questProgressText.text = "COMPLETE!";
     }
@@ -161,7 +168,8 @@ public class QuestManager : MonoBehaviour
             return null;
         }
         
-        return currentQuest.stages[currentStageIndex];
+        QuestStage stage = currentQuest.stages[currentStageIndex];
+        return stage;
     }
     
     public bool IsStageComplete()
@@ -172,7 +180,6 @@ public class QuestManager : MonoBehaviour
         if (stage.requiredAmount > 0)
             return currentProgress >= stage.requiredAmount;
         
-        // For action stages (requiredAmount = 0), they are complete after the action is performed
         return false;
     }
     
@@ -202,10 +209,6 @@ public class QuestManager : MonoBehaviour
                 questProgressText.text = $"{currentProgress}/{stage.requiredAmount}";
             else if (questProgressText != null)
                 questProgressText.text = "";
-        }
-        else
-        {
-            Debug.Log("Stage is null in UpdateQuestUI");
         }
     }
     

@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class CandleSystem : MonoBehaviour, IInteractable
 {
@@ -16,9 +17,10 @@ public class CandleSystem : MonoBehaviour, IInteractable
     
     [Header("Minigame Settings")]
     public float weightPerClick = 10f;
-    public float decayRate = 0.5f;
+    public float decayRate = 5f;
     public bool showMatchAnimation = true;
     public bool showFireEffect = true;
+    public float minigameCooldown = 2f;
     
     [Header("Message Settings")]
     public string candleExtinguishedMessageKey = "candle_extinguished";
@@ -31,6 +33,7 @@ public class CandleSystem : MonoBehaviour, IInteractable
     private float currentBurnTime;
     private bool isLit = true;
     private bool isRelighting;
+    private bool isOnCooldown;
     private Camera mainCamera;
     private Transform playerTransform;
     private bool hasShownExtinguishMessage;
@@ -39,6 +42,7 @@ public class CandleSystem : MonoBehaviour, IInteractable
     {
         currentBurnTime = maxBurnTime;
         UpdateCandleVisuals();
+        UpdateTimerDisplay();
         
         if (timerPanel != null)
             timerPanel.SetActive(false);
@@ -50,52 +54,88 @@ public class CandleSystem : MonoBehaviour, IInteractable
     
     private void Update()
     {
-        if (!isLit || isRelighting) return;
+        // Update burn time only if lit and not in minigame
+        if (isLit && !isRelighting)
+        {
+            currentBurnTime -= Time.deltaTime;
+            UpdateTimerDisplay();
+            
+            if (currentBurnTime <= 0f)
+            {
+                ExtinguishCandle();
+            }
+            
+            if (candleLight != null)
+            {
+                float percent = currentBurnTime / maxBurnTime;
+                candleLight.intensity = Mathf.Lerp(0.3f, 1.5f, percent);
+            }
+        }
         
-        currentBurnTime -= Time.deltaTime;
+        // Timer visibility - independent of cooldown, only affected by distance and minigame
+        UpdateTimerVisibility();
+    }
+    
+    private void UpdateTimerVisibility()
+    {
+        if (timerPanel == null || playerTransform == null) return;
         
+        // Only show timer if candle is lit AND not in minigame
+        bool shouldShow = isLit && !isRelighting;
+        
+        // Also check distance
+        if (shouldShow)
+        {
+            float distance = Vector3.Distance(transform.position, playerTransform.position);
+            shouldShow = distance <= showTimerDistance;
+        }
+        
+        if (timerPanel.activeSelf != shouldShow)
+            timerPanel.SetActive(shouldShow);
+    }
+    
+    private void UpdateTimerDisplay()
+    {
         if (circleTimerImage != null)
         {
             float percent = currentBurnTime / maxBurnTime;
-            circleTimerImage.fillAmount = percent;
-        }
-        
-        if (timerPanel != null && playerTransform != null)
-        {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            bool shouldShow = distance <= showTimerDistance && !isRelighting;
-            
-            if (timerPanel.activeSelf != shouldShow)
-                timerPanel.SetActive(shouldShow);
-        }
-        
-        if (currentBurnTime <= 0f)
-        {
-            ExtinguishCandle();
-        }
-        
-        if (candleLight != null)
-        {
-            float percent = currentBurnTime / maxBurnTime;
-            candleLight.intensity = Mathf.Lerp(0.3f, 1.5f, percent);
+            circleTimerImage.fillAmount = Mathf.Clamp01(percent);
         }
     }
     
     public void Interact()
     {
-        if (isRelighting) return;
+        if (isRelighting)
+        {
+            Debug.Log("Already relighting");
+            return;
+        }
+        
+        if (isOnCooldown)
+        {
+            Debug.Log($"On cooldown, wait {minigameCooldown} seconds");
+            return;
+        }
+        
         StartRelightMinigame();
     }
     
     private void StartRelightMinigame()
     {
-        if (ClickerMinigameSystem.Instance == null) return;
+        if (ClickerMinigameSystem.Instance == null)
+        {
+            Debug.LogWarning("ClickerMinigameSystem not found!");
+            return;
+        }
         
         isRelighting = true;
         hasShownExtinguishMessage = false;
         
+        // Hide timer during minigame
         if (timerPanel != null)
             timerPanel.SetActive(false);
+        
+        Debug.Log($"Starting candle minigame with weightPerClick={weightPerClick}, decayRate={decayRate}");
         
         var data = new ClickerMinigameSystem.MinigameData
         {
@@ -114,24 +154,31 @@ public class CandleSystem : MonoBehaviour, IInteractable
     
     private void OnRelightComplete()
     {
+        Debug.Log("Candle relight complete!");
         isRelighting = false;
         isLit = true;
         currentBurnTime = maxBurnTime;
+        UpdateTimerDisplay();
         UpdateCandleVisuals();
         
         if (!string.IsNullOrEmpty(relightSoundName))
             PlaySound(relightSoundName);
+        
+        // Start cooldown
+        StartCoroutine(CooldownRoutine());
     }
     
     private void OnRelightCancel()
     {
+        Debug.Log("Candle relight cancelled");
         isRelighting = false;
-        
-        if (isLit && timerPanel != null && playerTransform != null)
-        {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            timerPanel.SetActive(distance <= showTimerDistance);
-        }
+    }
+    
+    private IEnumerator CooldownRoutine()
+    {
+        isOnCooldown = true;
+        yield return new WaitForSeconds(minigameCooldown);
+        isOnCooldown = false;
     }
     
     private void ExtinguishCandle()
@@ -171,8 +218,14 @@ public class CandleSystem : MonoBehaviour, IInteractable
     
     public string GetInteractionName()
     {
-        string status = isLit ? " (Lit)" : " (Out)";
-        return GetLocalizedText(candleNameKey) + status;
+        return GetLocalizedText(candleNameKey);
+    }
+    
+    private bool IsInRange()
+    {
+        if (playerTransform == null) return true;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= showTimerDistance;
     }
     
     private string GetLocalizedText(string key)

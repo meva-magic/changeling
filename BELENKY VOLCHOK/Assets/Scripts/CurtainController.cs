@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 
 public class CurtainController : MonoBehaviour, IInteractable
 {
@@ -9,8 +10,8 @@ public class CurtainController : MonoBehaviour, IInteractable
     
     [Header("Hold Settings")]
     public float holdTimeRequired = 3f;
-    public float decayRate = 1f;
     public float fillRate = 1f;
+    public float interactionRange = 3f;
     
     [Header("UI")]
     public GameObject progressPanel;
@@ -25,112 +26,206 @@ public class CurtainController : MonoBehaviour, IInteractable
     public string closeCompleteSoundName = "CurtainClose";
     public string cancelSoundName = "CurtainCancel";
     
+    [Header("Localization Keys")]
+    public string interactionNameKey = "curtain";
+    
     private float currentProgress;
     private bool isHolding;
-    private bool isClosed;
-    private Camera mainCamera;
+    private Transform playerTransform;
+    private bool monsterDefeated = false;
+    private Coroutine fillCoroutine;
     
     private void Start()
     {
-        mainCamera = Camera.main;
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            playerTransform = player.transform;
         
+        // Set initial visual state - OPEN
         if (openModel != null) openModel.SetActive(true);
         if (closedModel != null) closedModel.SetActive(false);
-        if (progressPanel != null) progressPanel.SetActive(false);
+        
+        // Setup progress UI
+        if (progressPanel != null)
+            progressPanel.SetActive(false);
         
         if (progressSlider != null)
         {
             progressSlider.minValue = 0;
             progressSlider.maxValue = holdTimeRequired;
+            progressSlider.value = 0;
         }
+        
+        if (fillImage != null)
+            fillImage.fillAmount = 0;
+        
+        monsterDefeated = false;
+        currentProgress = 0;
     }
     
     private void Update()
     {
-        if (isClosed) return;
+        // If curtain is defeated and closed, don't do anything
+        if (monsterDefeated) return;
         
-        bool looking = IsLookingAtCurtain();
+        // Check if player is still holding the interaction key
+        bool isStillHolding = Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
+        
+        // If not holding and was holding before, reset everything
+        if (!isStillHolding && isHolding)
+        {
+            ResetCurtainToOpen();
+        }
+    }
+    
+    public void Interact()
+    {
+        // Start holding when player interacts
+        if (!isHolding && !monsterDefeated)
+        {
+            StartHolding();
+        }
+    }
+    
+    private void StartHolding()
+    {
+        if (isHolding || monsterDefeated) return;
+        
+        isHolding = true;
+        
+        // Check if monster exists
         bool hasMonster = targetWindow != null && targetWindow.HasActiveMonster;
         
-        if (looking && hasMonster && Input.GetMouseButton(0))
+        if (hasMonster)
         {
-            if (!isHolding)
-            {
-                isHolding = true;
-                if (progressPanel != null) progressPanel.SetActive(true);
-                PlaySound(holdStartSoundName);
-            }
+            // Show progress panel
+            if (progressPanel != null)
+                progressPanel.SetActive(true);
             
-            currentProgress += fillRate * Time.deltaTime;
-            currentProgress = Mathf.Min(currentProgress, holdTimeRequired);
-            UpdateUI();
+            PlaySound(holdStartSoundName);
             
-            if (currentProgress >= holdTimeRequired)
-            {
-                CloseCurtain();
-            }
+            // Start fill coroutine
+            if (fillCoroutine != null)
+                StopCoroutine(fillCoroutine);
+            fillCoroutine = StartCoroutine(FillRoutine());
         }
-        else
-        {
-            if (isHolding)
-            {
-                isHolding = false;
-                if (currentProgress < holdTimeRequired && currentProgress > 0)
-                    PlaySound(cancelSoundName);
-            }
-            
-            if (currentProgress > 0)
-            {
-                currentProgress -= decayRate * Time.deltaTime;
-                currentProgress = Mathf.Max(currentProgress, 0);
-                UpdateUI();
-                
-                if (currentProgress <= 0 && progressPanel != null)
-                    progressPanel.SetActive(false);
-            }
-        }
-    }
-    
-    private bool IsLookingAtCurtain()
-    {
-        if (mainCamera == null) return false;
         
-        Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
-        RaycastHit hit;
-        
-        if (Physics.Raycast(ray, out hit, 5f))
-        {
-            return hit.collider.gameObject == gameObject;
-        }
-        return false;
-    }
-    
-    private void UpdateUI()
-    {
-        if (progressSlider != null)
-        {
-            progressSlider.value = currentProgress;
-            if (fillImage != null)
-            {
-                float t = currentProgress / holdTimeRequired;
-                fillImage.color = Color.Lerp(Color.red, Color.green, t);
-            }
-        }
-    }
-    
-    private void CloseCurtain()
-    {
-        isClosed = true;
-        isHolding = false;
-        
+        // Close curtain visual immediately when holding
         if (openModel != null) openModel.SetActive(false);
         if (closedModel != null) closedModel.SetActive(true);
-        if (progressPanel != null) progressPanel.SetActive(false);
+    }
+    
+    private IEnumerator FillRoutine()
+    {
+        float fillTimer = 0f;
+        
+        while (isHolding && !monsterDefeated)
+        {
+            // Check if player is still holding
+            bool isStillHolding = Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
+            
+            if (!isStillHolding)
+            {
+                ResetCurtainToOpen();
+                yield break;
+            }
+            
+            // Check if still in range
+            if (!IsInRange())
+            {
+                ResetCurtainToOpen();
+                yield break;
+            }
+            
+            // Check if monster still exists
+            bool hasMonster = targetWindow != null && targetWindow.HasActiveMonster;
+            if (!hasMonster)
+            {
+                // Monster disappeared, just reset to open
+                ResetCurtainToOpen();
+                yield break;
+            }
+            
+            // Fill progress
+            fillTimer += fillRate * Time.deltaTime;
+            currentProgress = Mathf.Min(fillTimer, holdTimeRequired);
+            UpdateProgressUI(currentProgress / holdTimeRequired);
+            
+            // Check if complete
+            if (fillTimer >= holdTimeRequired)
+            {
+                DefeatMonster();
+                yield break;
+            }
+            
+            yield return null;
+        }
+    }
+    
+    private void ResetCurtainToOpen()
+    {
+        if (monsterDefeated) return;
+        
+        isHolding = false;
+        
+        if (fillCoroutine != null)
+            StopCoroutine(fillCoroutine);
+        
+        // Reset progress
+        currentProgress = 0;
+        
+        // Hide progress panel
+        if (progressPanel != null)
+            progressPanel.SetActive(false);
+        
+        // Reset progress UI
+        UpdateProgressUI(0);
+        
+        // ALWAYS open curtain when not holding
+        if (openModel != null) openModel.SetActive(true);
+        if (closedModel != null) closedModel.SetActive(false);
+        
+        // Play cancel sound if there was progress
+        if (currentProgress > 0)
+            PlaySound(cancelSoundName);
+    }
+    
+    private void DefeatMonster()
+    {
+        monsterDefeated = true;
+        isHolding = false;
         
         PlaySound(closeCompleteSoundName);
         
         if (targetWindow != null && targetWindow.HasActiveMonster)
             targetWindow.DespawnMonster();
+        
+        // Hide progress panel
+        if (progressPanel != null)
+            progressPanel.SetActive(false);
+        
+        // Reset progress UI
+        UpdateProgressUI(0);
+        
+        // Keep curtain closed permanently (monster defeated)
+        if (openModel != null) openModel.SetActive(false);
+        if (closedModel != null) closedModel.SetActive(true);
+    }
+    
+    private void UpdateProgressUI(float normalizedProgress)
+    {
+        if (progressSlider != null)
+            progressSlider.value = normalizedProgress * holdTimeRequired;
+        
+        if (fillImage != null)
+            fillImage.fillAmount = normalizedProgress;
+    }
+    
+    private bool IsInRange()
+    {
+        if (playerTransform == null) return true;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= interactionRange;
     }
     
     private void PlaySound(string soundName)
@@ -139,24 +234,30 @@ public class CurtainController : MonoBehaviour, IInteractable
             AudioManager.instance.Play(soundName);
     }
     
-    public void Interact()
-    {
-        // Optional: Add interaction hint
-    }
-    
     public string GetInteractionName()
     {
-        return "Curtain (Hold to Close)";
+        return GetLocalizedText(interactionNameKey);
+    }
+    
+    private string GetLocalizedText(string key)
+    {
+        var table = UnityEngine.Localization.Settings.LocalizationSettings.StringDatabase;
+        if (table != null && !string.IsNullOrEmpty(key))
+            return table.GetLocalizedString("UI Table", key);
+        return key;
     }
     
     public void ResetCurtain()
     {
-        isClosed = false;
+        StopAllCoroutines();
+        isHolding = false;
+        monsterDefeated = false;
         currentProgress = 0;
         
         if (openModel != null) openModel.SetActive(true);
         if (closedModel != null) closedModel.SetActive(false);
         if (progressPanel != null) progressPanel.SetActive(false);
         if (progressSlider != null) progressSlider.value = 0;
+        if (fillImage != null) fillImage.fillAmount = 0;
     }
 }
