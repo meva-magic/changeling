@@ -39,7 +39,7 @@ Material:
     - _SwayFrequency: 0.5
     - _WindGust: 0.05
     - _WindSpeed: 3
-    - _WindStrength: 0.2
+    - _WindStrength: 0.3
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _WindDirection: {r: 1, g: 1, b: 0, a: 0}

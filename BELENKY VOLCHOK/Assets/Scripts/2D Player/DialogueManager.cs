@@ -18,6 +18,7 @@ public class SimpleDialogueManager : MonoBehaviour
     private bool isLastLineFullyDisplayed;
     private float dialogueEndTime;
     private bool isReminder;
+    private bool questPanelWasActive;
     
     public bool IsShowing => isShowing;
     public bool JustEnded => Time.time < dialogueEndTime + 0.3f;
@@ -31,14 +32,12 @@ public class SimpleDialogueManager : MonoBehaviour
             dialoguePanel.SetActive(false);
     }
     
-    // Regular dialogue - blocks movement
     public void ShowDialogue(SimpleDialogue dialogue, MonoBehaviour trigger)
     {
         if (dialogue == null) return;
         
         int lineCount = dialogue.GetLineCount();
         if (lineCount == 0) return;
-        
         if (dialoguePanel == null) return;
         
         currentDialogue = dialogue;
@@ -48,18 +47,20 @@ public class SimpleDialogueManager : MonoBehaviour
         isLastLineFullyDisplayed = false;
         isReminder = false;
         
+        // Скрыть панель квеста если активна
+        HideQuestPanel();
+        
         dialoguePanel.SetActive(true);
         DisablePlayerMovement();
         
         ShowNextLine();
     }
     
-    // Zone reminder - does NOT block movement
     public void ShowReminder(string text)
     {
         if (string.IsNullOrEmpty(text)) return;
         if (dialoguePanel == null) return;
-        if (isReminder) return; // Don't stack reminders
+        if (isReminder) return;
         
         currentDialogue = null;
         currentTrigger = null;
@@ -68,7 +69,6 @@ public class SimpleDialogueManager : MonoBehaviour
         
         dialoguePanel.SetActive(true);
         dialogueText.text = text;
-        // NO DisablePlayerMovement here - player can walk during reminder
     }
     
     public void HideReminder()
@@ -82,14 +82,29 @@ public class SimpleDialogueManager : MonoBehaviour
             dialoguePanel.SetActive(false);
     }
     
+    private void HideQuestPanel()
+    {
+        if (SimpleQuestManager.Instance != null)
+        {
+            questPanelWasActive = SimpleQuestManager.Instance.IsQuestPanelActive();
+            if (questPanelWasActive)
+                SimpleQuestManager.Instance.HideQuestPanel();
+        }
+    }
+    
+    private void ShowQuestPanelIfWasActive()
+    {
+        if (questPanelWasActive && SimpleQuestManager.Instance != null)
+        {
+            SimpleQuestManager.Instance.ShowQuestPanel();
+        }
+    }
+    
     private void Update()
     {
         if (!isShowing) return;
-        
-        // Reminder mode - doesn't respond to input (auto-closes from ZoneTrigger)
         if (isReminder) return;
         
-        // Dialogue mode
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
         {
             if (typingCoroutine != null)
@@ -104,9 +119,7 @@ public class SimpleDialogueManager : MonoBehaviour
                 }
                 
                 if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
-                {
                     isLastLineFullyDisplayed = true;
-                }
             }
             else if (isLastLineFullyDisplayed)
             {
@@ -154,9 +167,7 @@ public class SimpleDialogueManager : MonoBehaviour
         typingCoroutine = null;
         
         if (currentDialogue != null && currentLineIndex >= currentDialogue.GetLineCount())
-        {
             isLastLineFullyDisplayed = true;
-        }
     }
     
     private void PlayVoiceSound()
@@ -199,6 +210,9 @@ public class SimpleDialogueManager : MonoBehaviour
             dialoguePanel.SetActive(false);
         
         EnablePlayerMovement();
+        
+        // Показать панель квеста обратно если была активна
+        ShowQuestPanelIfWasActive();
         
         if (currentTrigger != null)
         {

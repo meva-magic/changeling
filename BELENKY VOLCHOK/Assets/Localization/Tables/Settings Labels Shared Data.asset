@@ -27,10 +27,6 @@ MonoBehaviour:
     m_Key: settings.soundOff
     m_Metadata:
       m_Items: []
-  - m_Id: 145966161920
-    m_Key: settings.language
-    m_Metadata:
-      m_Items: []
   - m_Id: 5517674209280
     m_Key: 'settings.title
 
@@ -38,7 +34,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 397829898166272
-    m_Key: settings.languag
+    m_Key: settings.language
     m_Metadata:
       m_Items: []
   m_Metadata:

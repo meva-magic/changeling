@@ -46,6 +46,22 @@ MonoBehaviour:
     m_Localized: need bucket
     m_Metadata:
       m_Items: []
+  - m_Id: 1821376334782464
+    m_Localized: Bring a bucket of water
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1837392951500800
+    m_Localized: Press space to talk
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1837491853189120
+    m_Localized: Press space to pick up
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1838459789500416
+    m_Localized: Press space
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

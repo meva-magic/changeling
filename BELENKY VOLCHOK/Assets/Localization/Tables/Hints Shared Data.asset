@@ -16,11 +16,25 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: 59ebfe635b3c07947a97ea4f65aa2a8b
   m_Entries:
   - m_Id: 8312053760
-    m_Key: hint.interactinon
+    m_Key: 'hint.interactinon
+
+'
     m_Metadata:
       m_Items: []
   - m_Id: 138968817664
     m_Key: hint.candle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 457335662174208
+    m_Key: hint.lightFire
+    m_Metadata:
+      m_Items: []
+  - m_Id: 457400296398848
+    m_Key: hint.gatherWood
+    m_Metadata:
+      m_Items: []
+  - m_Id: 457489572159488
+    m_Key: hint.firewood
     m_Metadata:
       m_Items: []
   m_Metadata:

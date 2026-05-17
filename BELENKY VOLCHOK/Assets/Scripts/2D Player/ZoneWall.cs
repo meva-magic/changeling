@@ -26,13 +26,17 @@ public class ZoneWall : MonoBehaviour
     [SerializeField] private SimpleQuest questToWatch;
     [SerializeField] private GameObject solidBlocker;
     
+    [Header("Item Drop Points")]
+    [SerializeField] private Transform itemDropPointZoneA;
+    [SerializeField] private Transform itemDropPointZoneB;
+    
     [Header("Reminders")]
-    [SerializeField] [TextArea(1, 3)] private string reminderNoQuestAtoB = "I need to take the quest first...";
-    [SerializeField] [TextArea(1, 3)] private string reminderNoKeyAtoB = "I need a key...";
-    [SerializeField] [TextArea(1, 3)] private string reminderQuestItemGotAtoB = "I need to finish the quest first...";
-    [SerializeField] [TextArea(1, 3)] private string reminderNoQuestBtoA = "I need to take the quest first...";
-    [SerializeField] [TextArea(1, 3)] private string reminderNoKeyBtoA = "I need a key...";
-    [SerializeField] [TextArea(1, 3)] private string reminderQuestItemGotBtoA = "I need to finish the quest first...";
+    [SerializeField] [TextArea(1, 3)] private string reminderNoQuestAtoB = "";
+    [SerializeField] [TextArea(1, 3)] private string reminderNoKeyAtoB = "";
+    [SerializeField] [TextArea(1, 3)] private string reminderQuestItemGotAtoB = "";
+    [SerializeField] [TextArea(1, 3)] private string reminderNoQuestBtoA = "";
+    [SerializeField] [TextArea(1, 3)] private string reminderNoKeyBtoA = "";
+    [SerializeField] [TextArea(1, 3)] private string reminderQuestItemGotBtoA = "";
     [SerializeField] private float reminderDuration = 2f;
     
     private PlayerCarry playerCarry;
@@ -83,33 +87,85 @@ public class ZoneWall : MonoBehaviour
     
     private void OnTriggerEnter2D(Collider2D other)
     {
-        if (!other.CompareTag("Player")) return;
-        if (zoneA.isTransitioning || zoneB.isTransitioning) return;
-        
-        if (isUnlocked)
+        if (other.CompareTag("Player"))
         {
-            Vector3 playerPos = other.transform.position;
-            float distToA = Vector3.Distance(playerPos, zoneA.transform.position);
-            float distToB = Vector3.Distance(playerPos, zoneB.transform.position);
+            if (isUnlocked)
+            {
+                Vector3 playerPos = other.transform.position;
+                float distToA = Vector3.Distance(playerPos, zoneA.transform.position);
+                float distToB = Vector3.Distance(playerPos, zoneB.transform.position);
+                
+                if (distToA < distToB)
+                    zoneA.TransitionToZone(zoneB, spawnInZoneB);
+                else
+                    zoneB.TransitionToZone(zoneA, spawnInZoneA);
+                
+                return;
+            }
             
-            if (distToA < distToB)
-                zoneA.TransitionToZone(zoneB, spawnInZoneB);
-            else
-                zoneB.TransitionToZone(zoneA, spawnInZoneA);
+            if (!zoneA.isTransitioning && !zoneB.isTransitioning)
+            {
+                if (Time.time - lastReminderTime >= 1f)
+                {
+                    Vector3 pos = other.transform.position;
+                    float dA = Vector3.Distance(pos, zoneA.transform.position);
+                    float dB = Vector3.Distance(pos, zoneB.transform.position);
+                    
+                    if (dA < dB)
+                        TryCrossAtoB();
+                    else
+                        TryCrossBtoA();
+                }
+            }
             
             return;
         }
         
-        if (Time.time - lastReminderTime < 1f) return;
+        PickupableItem item = other.GetComponent<PickupableItem>();
+        if (item == null) item = other.GetComponentInParent<PickupableItem>();
         
-        Vector3 pos = other.transform.position;
-        float dA = Vector3.Distance(pos, zoneA.transform.position);
-        float dB = Vector3.Distance(pos, zoneB.transform.position);
+        if (item != null && !item.IsBeingCarried)
+        {
+            MoveItemToCorrectZone(item);
+        }
+    }
+    
+    private void OnTriggerStay2D(Collider2D other)
+    {
+        PickupableItem item = other.GetComponent<PickupableItem>();
+        if (item == null) item = other.GetComponentInParent<PickupableItem>();
         
-        if (dA < dB)
-            TryCrossAtoB();
+        if (item != null && !item.IsBeingCarried)
+        {
+            MoveItemToCorrectZone(item);
+        }
+    }
+    
+    private void MoveItemToCorrectZone(PickupableItem item)
+    {
+        float distToA = Vector3.Distance(item.transform.position, zoneA.transform.position);
+        float distToB = Vector3.Distance(item.transform.position, zoneB.transform.position);
+        
+        if (distToA < distToB)
+        {
+            if (itemDropPointZoneA != null)
+                item.transform.position = itemDropPointZoneA.position;
+            else
+                item.transform.position = zoneA.transform.position + Vector3.right * 2f;
+        }
         else
-            TryCrossBtoA();
+        {
+            if (itemDropPointZoneB != null)
+                item.transform.position = itemDropPointZoneB.position;
+            else
+                item.transform.position = zoneB.transform.position + Vector3.left * 2f;
+        }
+        
+        Rigidbody2D rb = item.GetComponent<Rigidbody2D>();
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero;
+        }
     }
     
     private void TryCrossAtoB()

@@ -10,6 +10,7 @@ public class SimpleQuestManager : MonoBehaviour
     
     private SimpleQuest activeQuest;
     private bool questCompleted;
+    private bool isPanelHidden;
     
     private void Awake()
     {
@@ -22,14 +23,11 @@ public class SimpleQuestManager : MonoBehaviour
     
     public void StartQuest(SimpleQuest quest)
     {
-        if (quest == null)
-        {
-            Debug.LogError("Quest is null!");
-            return;
-        }
+        if (quest == null) return;
         
         activeQuest = quest;
         questCompleted = false;
+        isPanelHidden = false;
         
         if (questPanel != null)
         {
@@ -45,13 +43,40 @@ public class SimpleQuestManager : MonoBehaviour
         }
         
         if (questDescriptionText != null)
-            questDescriptionText.text = quest.description;
+        {
+            string description = quest.GetDescription();
+            if (!string.IsNullOrEmpty(description))
+                questDescriptionText.text = description;
+        }
     }
     
     public bool IsQuestActive(SimpleQuest quest)
     {
         if (quest == null) return false;
         return activeQuest == quest && !questCompleted;
+    }
+    
+    public bool IsQuestPanelActive()
+    {
+        return questPanel != null && questPanel.activeSelf;
+    }
+    
+    public void HideQuestPanel()
+    {
+        if (questPanel != null && questPanel.activeSelf)
+        {
+            questPanel.SetActive(false);
+            isPanelHidden = true;
+        }
+    }
+    
+    public void ShowQuestPanel()
+    {
+        if (questPanel != null && isPanelHidden && activeQuest != null && !questCompleted)
+        {
+            questPanel.SetActive(true);
+            isPanelHidden = false;
+        }
     }
     
     public bool CanCompleteQuest(SimpleQuest quest)
@@ -73,6 +98,7 @@ public class SimpleQuestManager : MonoBehaviour
         if (quest == null || activeQuest != quest) return;
         
         questCompleted = true;
+        isPanelHidden = false;
         
         if (questPanel != null)
             questPanel.SetActive(false);

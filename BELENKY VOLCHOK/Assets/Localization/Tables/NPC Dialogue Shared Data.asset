@@ -16,7 +16,11 @@ MonoBehaviour:
   m_TableCollectionNameGuidString: c342abb55b204cb4eb2150a794a77900
   m_Entries:
   - m_Id: 7579103232
-    m_Key: granny.first
+    m_Key: granny.first1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1631165579517952
+    m_Key: granny.first2
     m_Metadata:
       m_Items: []
   - m_Id: 111497179136
@@ -24,7 +28,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 135970942976
-    m_Key: man.first
+    m_Key: man.first1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1822469311684608
+    m_Key: man.first2
     m_Metadata:
       m_Items: []
   - m_Id: 162093068288
@@ -35,12 +43,60 @@ MonoBehaviour:
     m_Key: man.finishQuest
     m_Metadata:
       m_Items: []
+  - m_Id: 1822724891598848
+    m_Key: 'man.finishDialogue
+
+'
+    m_Metadata:
+      m_Items: []
   - m_Id: 16904433430528
     m_Key: reminder.baby
     m_Metadata:
       m_Items: []
   - m_Id: 16910188015616
     m_Key: reminder.bucket
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1821376334782464
+    m_Key: dialogue.bucketQuest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1635401184829440
+    m_Key: dialogue.burn1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1823260835569664
+    m_Key: dialogue.burn2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1823302719889408
+    m_Key: dialogue.burn3
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1823350971162624
+    m_Key: quest.burn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1824560293863424
+    m_Key: paper.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1824605005144064
+    m_Key: paper.description
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1837392951500800
+    m_Key: dialogue.indicator
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1837491853189120
+    m_Key: item.indicator
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1838459789500416
+    m_Key: 'clicker.indicator
+
+'
     m_Metadata:
       m_Items: []
   m_Metadata:

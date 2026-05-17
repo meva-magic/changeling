@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: FirewoodQuest
   m_EditorClassIdentifier: 
   questId: FirewoodQuest
-  titleKey: quest.firewood
+  titleKey: hint.firewood
   stages:
   - stageId: gatherWood
-    objectiveKey: quest.gatherWood
+    objectiveKey: hint.gatherWood
     requiredAmount: 5
     targetTag: Firewood
   - stageId: lightFire
-    objectiveKey: quest.lightFire
+    objectiveKey: hint.lightFire
     requiredAmount: 0
     targetTag: Fireplace

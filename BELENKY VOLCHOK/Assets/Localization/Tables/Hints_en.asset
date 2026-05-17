@@ -26,6 +26,18 @@ MonoBehaviour:
     m_Localized: The candle must keep butning so THEY cant come inside
     m_Metadata:
       m_Items: []
+  - m_Id: 457400296398848
+    m_Localized: Gather firewood
+    m_Metadata:
+      m_Items: []
+  - m_Id: 457489572159488
+    m_Localized: Light the fireplace
+    m_Metadata:
+      m_Items: []
+  - m_Id: 457335662174208
+    m_Localized: Light the fireplace
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

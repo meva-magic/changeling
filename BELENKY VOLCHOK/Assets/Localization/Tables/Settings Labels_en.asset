@@ -22,10 +22,6 @@ MonoBehaviour:
     m_Localized: SOUND ON/OFF
     m_Metadata:
       m_Items: []
-  - m_Id: 145966161920
-    m_Localized: LANGUAGE
-    m_Metadata:
-      m_Items: []
   - m_Id: 39053352960
     m_Localized: VOLUME
     m_Metadata:
@@ -36,6 +32,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 5517674209280
     m_Localized: SETTINGS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 397829898166272
+    m_Localized: LANGUAGE CHANGE
     m_Metadata:
       m_Items: []
   references:
