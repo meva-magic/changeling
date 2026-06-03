@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5be51871efa6c3e4eae1703925c8f5ac, type: 3}
+  m_Name: Newspaper
+  m_EditorClassIdentifier: 
+  m_SharedTableData: {fileID: 11400000, guid: b082a568cf7256b4089f7d27d65cabdf, type: 2}
+  m_Tables:
+  - {fileID: 11400000, guid: 3270a853c7bf33d4eb874c86b872bfd1, type: 2}
+  - {fileID: 11400000, guid: cef90b1e5047ac84b975ab846a859d03, type: 2}
+  m_Extensions: []
+  m_Group: String Table
+  references:
+    version: 2
+    RefIds: []

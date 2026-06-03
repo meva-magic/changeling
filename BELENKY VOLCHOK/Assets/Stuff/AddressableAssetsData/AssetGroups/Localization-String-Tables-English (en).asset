@@ -29,6 +29,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 3270a853c7bf33d4eb874c86b872bfd1
+    m_Address: Newspaper_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 5026faf3eec5cb240abfa0895664491a
     m_Address: Hints_en
     m_ReadOnly: 1

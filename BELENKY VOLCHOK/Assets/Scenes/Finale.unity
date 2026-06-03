@@ -300,7 +300,8 @@ MonoBehaviour:
   carryPoint: {fileID: 491140600}
   dropPoint: {fileID: 1934176402}
   slowSpeedMultiplier: 0.6
-  pickupIndicatorUI: {fileID: 1123935373}
+  pickupIndicatorPanel: {fileID: 0}
+  dialogueIndicatorPanel: {fileID: 0}
 --- !u!61 &215233861
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -2498,6 +2499,8 @@ MonoBehaviour:
   destroyAfterQuestComplete: 1
   questToWatch: {fileID: 0}
   solidBlocker: {fileID: 0}
+  itemDropPointZoneA: {fileID: 0}
+  itemDropPointZoneB: {fileID: 0}
   reminderNoQuestAtoB: 
   reminderNoKeyAtoB: 
   reminderQuestItemGotAtoB: 
@@ -2798,13 +2801,7 @@ MonoBehaviour:
   questCompleteDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3,
     type: 2}
   postQuestDialogue: {fileID: 11400000, guid: 77388cb239978194584d63b74c3698e3, type: 2}
-  indicator: {fileID: 845921181}
-  onQuestStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onQuestCompleted:
-    m_PersistentCalls:
-      m_Calls: []
+  npcItemDropPoint: {fileID: 0}
 --- !u!1 &1731747954
 GameObject:
   m_ObjectHideFlags: 0

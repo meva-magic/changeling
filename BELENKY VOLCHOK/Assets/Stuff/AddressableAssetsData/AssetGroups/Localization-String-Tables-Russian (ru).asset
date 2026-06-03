@@ -61,6 +61,12 @@ MonoBehaviour:
     - Locale-ru
     - Preload
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cef90b1e5047ac84b975ab846a859d03
+    m_Address: Newspaper_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: db00621f3a6d8b84e8926facbd7b270c
     m_Address: Settings Labels_ru
     m_ReadOnly: 1
