@@ -18,7 +18,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &8864001793788539041
 Transform:
   m_ObjectHideFlags: 0
@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 202467459706667260}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.0799997, y: -1, z: 0}
+  m_LocalPosition: {x: -6.853194, y: 7.9128, z: 0}
   m_LocalScale: {x: 0.3, y: 0.4, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -45,13 +45,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 202467459706667260}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57fbbd793b4343648a8fa599a3450403, type: 3}
+  m_Script: {fileID: 11500000, guid: be9aebe2a3419e44d9d1eab4357ab80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   itemID: Changeling
   slowsPlayer: 1
   pickupRange: 2
   sceneToLoadOnPickup: 
+  screamerDelay: 1
+  screamerPanel: {fileID: 0}
+  screamerDuration: 1.5
+  screamerSound: BabyJumpscare
 --- !u!58 &3656758858840420800
 CircleCollider2D:
   m_ObjectHideFlags: 0

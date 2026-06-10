@@ -27,11 +27,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 5612167168
-    m_Localized: SURE YOU WANT OT EXIT?
+    m_Localized: Sure you want to exit?
     m_Metadata:
       m_Items: []
   - m_Id: 450418106368
-    m_Localized: PROGRESS WONT BE SAVED
+    m_Localized: Progress won't be saved
     m_Metadata:
       m_Items: []
   references:

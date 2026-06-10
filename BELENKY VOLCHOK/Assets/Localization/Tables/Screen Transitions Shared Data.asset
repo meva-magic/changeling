@@ -23,10 +23,6 @@ MonoBehaviour:
     m_Key: transitions.prologue
     m_Metadata:
       m_Items: []
-  - m_Id: 812483010560
-    m_Key: transitions.game
-    m_Metadata:
-      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

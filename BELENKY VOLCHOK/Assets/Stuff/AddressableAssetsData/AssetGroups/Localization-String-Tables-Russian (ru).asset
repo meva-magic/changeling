@@ -36,14 +36,32 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-ru
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 58202c226d9fbaf48b43ed3b87f5dd89
+    m_Address: Baby Hints_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 71a8a9fee35bedd4b80b4bed95c97afb
     m_Address: Confirm Labels_ru
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-ru
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 72cf5dca8191bf440a8b286c69a5e58a
+    m_Address: Quests_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 801e7a5726a4de9438193ad4161f8093
     m_Address: Pause Labels_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b1860ac463c595e46be443f18227596c
+    m_Address: Granny Dialogue_ru
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-ru
@@ -61,8 +79,20 @@ MonoBehaviour:
     - Locale-ru
     - Preload
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c16454cf589a05641b862f8f6b254d40
+    m_Address: Man Dialogue_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: cef90b1e5047ac84b975ab846a859d03
     m_Address: Newspaper_ru
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-ru
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d014a819795b6fe43a78d8fbf0700a55
+    m_Address: Tutorial_ru
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-ru

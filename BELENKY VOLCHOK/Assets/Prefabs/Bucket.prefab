@@ -128,17 +128,17 @@ MonoBehaviour:
   m_GameObject: {fileID: 6730024437310989073}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57fbbd793b4343648a8fa599a3450403, type: 3}
+  m_Script: {fileID: 11500000, guid: be9aebe2a3419e44d9d1eab4357ab80e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   itemID: Bucket
   slowsPlayer: 0
-  pickupRange: 3
+  pickupRange: 2
   sceneToLoadOnPickup: 
   screamerDelay: 1
   screamerPanel: {fileID: 0}
   screamerDuration: 1.5
-  screamerSoundName: 
+  screamerSound: 
 --- !u!50 &7094367448922539349
 Rigidbody2D:
   serializedVersion: 4

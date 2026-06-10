@@ -26,6 +26,10 @@ MonoBehaviour:
     m_Localized: Local woman burns child alive in the fireplace
     m_Metadata:
       m_Items: []
+  - m_Id: 2200609973526528
+    m_Localized: press space to close
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

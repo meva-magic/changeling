@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22bd5465f88362341b30c74e4f82100c, type: 3}
+  m_Name: GrannyBurnQuest
+  m_EditorClassIdentifier: 
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: GUID:aaf08c1aaf983a34386beaf8fdd06e09
+  lineKeys:
+  - granny.burnQuest
+  responses:
+  - stringTable:
+      m_TableReference:
+        m_TableCollectionName: 
+    textKey: 
+    nextNode: {fileID: 11400000, guid: cc85dde990b0fcd47a971d0f3f1be77b, type: 2}
+    givesQuest: 1
+    questToGive: {fileID: 11400000, guid: 7315e71bf3634f540b947a9815bbaaaa, type: 2}
+    completesQuest: 0
+    questToComplete: {fileID: 0}
+  isRepeating: 0
+  voiceSound: GrannyVoice

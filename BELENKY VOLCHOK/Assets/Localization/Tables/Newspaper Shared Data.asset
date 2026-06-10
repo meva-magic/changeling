@@ -25,6 +25,10 @@ MonoBehaviour:
     m_Key: news.text
     m_Metadata:
       m_Items: []
+  - m_Id: 2200609973526528
+    m_Key: news.hint
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

@@ -17,6 +17,11 @@ MonoBehaviour:
     m_SerializedData: []
   m_GUID: fb7addd9b7841c343baeee85cee3312b
   m_SerializeEntries:
+  - m_GUID: 0b12b5b2a22b41441957a7a0247d54c2
+    m_Address: Assets/Localization/Tables/Baby Hints Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 1477d5da3ce9afd4480c871e0757cb94
     m_Address: Assets/TextMesh Pro/Locales/Tables/Dialogue Shared Data.asset
     m_ReadOnly: 1
@@ -27,13 +32,33 @@ MonoBehaviour:
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 21f208bbcd2176c4cb763ff4354c971b
+    m_Address: Assets/Localization/Tables/Tutorial Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46c795e21ad74d342b0fdf6179ab592c
+    m_Address: Assets/Localization/Tables/Man Dialogue Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 59ebfe635b3c07947a97ea4f65aa2a8b
     m_Address: Assets/Localization/Tables/Hints Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7208b0b62851dd74bae5cf55b77dc346
+    m_Address: Assets/Localization/Tables/Quests Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 814c4358874f10f4bb34be329f952051
     m_Address: Assets/TextMesh Pro/Locales/Menu Labels Shared Data.asset
+    m_ReadOnly: 1
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: aaf08c1aaf983a34386beaf8fdd06e09
+    m_Address: Assets/Granny Dialogue Shared Data.asset
     m_ReadOnly: 1
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0

@@ -50,9 +50,9 @@ public class SelectionManager : MonoBehaviour
             Ray offsetRay = new Ray(mainCamera.transform.position + offset, mainCamera.transform.forward);
             if (Physics.Raycast(offsetRay, out hit, maxDistance, targetLayer))
             {
-                IInteractable interactable = hit.collider.GetComponent<IInteractable>();
+                IClickable interactable = hit.collider.GetComponent<IClickable>();
                 if (interactable == null)
-                    interactable = hit.collider.GetComponentInParent<IInteractable>();
+                    interactable = hit.collider.GetComponentInParent<IClickable>();
                 
                 if (interactable != null)
                 {
@@ -87,9 +87,9 @@ public class SelectionManager : MonoBehaviour
         {
             if (hoveredObj != null)
             {
-                IInteractable interactable = hoveredObj.GetComponent<IInteractable>();
+                IClickable interactable = hoveredObj.GetComponent<IClickable>();
                 if (interactable == null)
-                    interactable = hoveredObj.GetComponentInParent<IInteractable>();
+                    interactable = hoveredObj.GetComponentInParent<IClickable>();
                 
                 if (interactable != null)
                 {
@@ -98,7 +98,7 @@ public class SelectionManager : MonoBehaviour
                     
                     selectedObj = hoveredObj;
                     SetOutline(selectedObj, true);
-                    interactable.Interact();
+                    interactable.OnInteract();
                 }
             }
             else if (selectedObj != null)
@@ -119,18 +119,12 @@ public class SelectionManager : MonoBehaviour
     {
         if (obj == null) return;
         
-        TightSpriteOutline tight = obj.GetComponent<TightSpriteOutline>();
-        if (tight == null)
-            tight = obj.AddComponent<TightSpriteOutline>();
-        
-        // Use per-object width if available
-        float width = outlineWidth;
-        SimpleInteractable interactable = obj.GetComponent<SimpleInteractable>();
-        if (interactable != null && interactable.outlineWidth > 0)
+        Outline outline = obj.GetComponent<Outline>();
+        if (outline != null)
         {
-            width = interactable.outlineWidth;
+            outline.OutlineColor = outlineColor;
+            outline.OutlineWidth = outlineWidth;
+            outline.enabled = enabled;
         }
-        
-        tight.EnableOutline(enabled, outlineColor, width);
     }
 }

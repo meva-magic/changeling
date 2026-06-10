@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 215c73665a2964e48b4b08a5c3805bcd, type: 3}
+  m_Name: FirewoodQuest
+  m_EditorClassIdentifier: 
+  Id: FirewoodQuest
+  Stages:
+  - Id: firewood1
+    ObjectiveKey: gatherWood
+    RequiredQuantity: 5
+    RequiredTag: Firewood
+  - Id: firewood2
+    ObjectiveKey: lightFire
+    RequiredQuantity: 0
+    RequiredTag: Fireplace

@@ -41,12 +41,30 @@ MonoBehaviour:
     m_SerializedLabels:
     - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 59b83f48d7945c14ca7758cee7a2af84
+    m_Address: Tutorial_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 5a3d36363348bba4997012564c6bbabe
+    m_Address: Quests_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 679f6f30f92fd4f4ea43c72fa5d42ac8
     m_Address: Menu Labels_en
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en
     - Preload
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7423b68f40a317e4eb7c458113bd30e3
+    m_Address: Man Dialogue_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 9041e177ea2658e4bb138a674d245c37
     m_Address: Screen Transitions_en
@@ -57,6 +75,18 @@ MonoBehaviour:
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 989be0223adbb5e4ba8f307bea8602b3
     m_Address: Confirm Labels_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bc451849851d9f640a10ec311d994e67
+    m_Address: Granny Dialogue_en
+    m_ReadOnly: 1
+    m_SerializedLabels:
+    - Locale-en
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ecfd84ea262105443877935a0889ef94
+    m_Address: Baby Hints_en
     m_ReadOnly: 1
     m_SerializedLabels:
     - Locale-en

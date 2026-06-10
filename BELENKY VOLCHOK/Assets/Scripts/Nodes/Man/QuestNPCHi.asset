@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22bd5465f88362341b30c74e4f82100c, type: 3}
+  m_Name: QuestNPCHi
+  m_EditorClassIdentifier: 
+  stringTable:
+    m_TableReference:
+      m_TableCollectionName: GUID:46c795e21ad74d342b0fdf6179ab592c
+  lineKeys:
+  - man.sayHi
+  responses:
+  - stringTable:
+      m_TableReference:
+        m_TableCollectionName: GUID:46c795e21ad74d342b0fdf6179ab592c
+    textKey: man.next
+    nextNode: {fileID: 11400000, guid: e41eef4a776ba7d48ac4fca5fe1bccc8, type: 2}
+    givesQuest: 1
+    questToGive: {fileID: 11400000, guid: ae540054eeaf9b9418ff0fa3d94717b6, type: 2}
+    completesQuest: 0
+    questToComplete: {fileID: 0}
+  isRepeating: 0
+  voiceSound: ManVoice
