@@ -2,20 +2,33 @@ using UnityEngine;
 
 public class InteractionPrompter : MonoBehaviour
 {
-    [SerializeField] private float detectionRange = 5f;
-    [SerializeField] private LayerMask detectableMask = -1;
-    [SerializeField] private float updateThrottle = 0.1f;
-    [SerializeField] private string defaultPromptKey = "hint.interaction";
+    public static InteractionPrompter Instance { get; private set; }
     
-    private Camera playerCamera;
-    private GameObject currentTarget;
-    private float lastUpdateTime;
+    [SerializeField] private string promptKey = "hint.interaction";
+    
     private string cachedPromptText;
+    private UserInterface userInterface;
+    private SelectionManager selectionManager;
+    private GameObject currentTarget;
+    private bool isPromptVisible = false;
+    private float checkTimer = 0f;
+    private GameObject lastValidTarget;
+    
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+    }
     
     private void Start()
     {
-        playerCamera = Camera.main;
-        cachedPromptText = GetLocalizedText(defaultPromptKey);
+        cachedPromptText = GetLocalizedText(promptKey);
+        userInterface = ServiceLocator.Get<UserInterface>();
+        selectionManager = FindObjectOfType<SelectionManager>();
     }
     
     private void Update()
@@ -23,54 +36,95 @@ public class InteractionPrompter : MonoBehaviour
         MinigameStarter minigame = ServiceLocator.Get<MinigameStarter>();
         if (minigame != null && minigame.IsMinigameActive)
         {
-            if (currentTarget != null) HidePrompt();
+            if (isPromptVisible) HidePrompt();
+            currentTarget = null;
+            lastValidTarget = null;
             return;
         }
         
-        if (Time.time < lastUpdateTime + updateThrottle) return;
-        lastUpdateTime = Time.time;
+        // Проверяем каждые 0.1 секунды
+        checkTimer += Time.deltaTime;
+        if (checkTimer < 0.1f) return;
+        checkTimer = 0f;
         
-        if (playerCamera == null) return;
+        GameObject newTarget = null;
         
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
-        
-        if (Physics.Raycast(ray, out RaycastHit hit, detectionRange, detectableMask))
+        if (selectionManager != null)
         {
-            IClickable interactable = hit.collider.GetComponent<IClickable>();
-            if (interactable == null)
-            {
-                interactable = hit.collider.GetComponentInParent<IClickable>();
-            }
-            
-            if (interactable != null)
-            {
-                if (currentTarget != hit.collider.gameObject)
-                {
-                    currentTarget = hit.collider.gameObject;
-                    ShowPrompt();
-                }
-                return;
-            }
+            newTarget = selectionManager.GetHoveredObject();
         }
         
-        if (currentTarget != null)
+        // Если текущий target уничтожен — сбрасываем
+        if (currentTarget != null && currentTarget == null)
         {
             currentTarget = null;
-            HidePrompt();
+            lastValidTarget = null;
+            if (isPromptVisible) HidePrompt();
         }
+        
+        // Проверяем валидность нового target
+        bool isValid = newTarget != null && IsValidInteractable(newTarget);
+        
+        if (isValid)
+        {
+            if (newTarget != currentTarget)
+            {
+                currentTarget = newTarget;
+                if (!isPromptVisible) ShowPrompt();
+            }
+        }
+        else
+        {
+            if (currentTarget != null || isPromptVisible)
+            {
+                currentTarget = null;
+                if (isPromptVisible) HidePrompt();
+            }
+        }
+    }
+    
+    private bool IsValidInteractable(GameObject obj)
+    {
+        if (obj == null) return false;
+        
+        IClickable interactable = obj.GetComponent<IClickable>();
+        if (interactable == null)
+            interactable = obj.GetComponentInParent<IClickable>();
+        
+        if (interactable == null) return false;
+        
+        // Проверяем расстояние до игрока
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return true;
+        
+        float distance = Vector3.Distance(obj.transform.position, player.transform.position);
+        float range = interactable.GetInteractionRange();
+        
+        return distance <= range;
     }
     
     private void ShowPrompt()
     {
-        UserInterface ui = ServiceLocator.Get<UserInterface>();
-        ui?.ShowHint(cachedPromptText);
+        if (userInterface != null)
+        {
+            userInterface.ShowHint(cachedPromptText);
+            isPromptVisible = true;
+            Debug.Log("InteractionPrompter: Показ подсказки");
+        }
     }
     
     private void HidePrompt()
     {
-        UserInterface ui = ServiceLocator.Get<UserInterface>();
-        ui?.HideHint();
+        if (userInterface != null)
+        {
+            userInterface.HideHint();
+            isPromptVisible = false;
+            Debug.Log("InteractionPrompter: Скрытие подсказки");
+        }
     }
     
-    private string GetLocalizedText(string key) { return key; }
+    private string GetLocalizedText(string key)
+    {
+        return key;
+    }
 }

@@ -22,8 +22,19 @@ public class TutorialTransition : MonoBehaviour
         if (hasTransitioned) return;
         hasTransitioned = true;
         
-        FadeToBlack.Instance?.FadeOut(() => {
+        Debug.Log("TutorialTransition: Квест завершён, запускаем затемнение");
+        
+        if (FadeToBlack.Instance != null)
+        {
+            FadeToBlack.Instance.FadeOut(() => {
+                Debug.Log($"TutorialTransition: Загрузка сцены {nextSceneName}");
+                UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
+            });
+        }
+        else
+        {
+            Debug.LogError("TutorialTransition: FadeToBlack.Instance не найден!");
             UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
-        });
+        }
     }
 }

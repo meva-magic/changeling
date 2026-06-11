@@ -6,7 +6,7 @@ public class SelectionManager : MonoBehaviour
     public Color outlineColor = Color.white;
     public float outlineWidth = 0.05f;
     public LayerMask targetLayer = -1;
-    public float maxDistance = 10f;
+    public float maxDistance = 5f;
     
     [Header("Cursor Settings")]
     public bool lockCursor = true;
@@ -17,6 +17,11 @@ public class SelectionManager : MonoBehaviour
     private Camera mainCamera;
     private float hoverConfirmTime = 0.05f;
     private float currentHoverTime = 0f;
+    
+    public GameObject GetHoveredObject()
+    {
+        return hoveredObj;
+    }
     
     void Start()
     {
@@ -37,27 +42,18 @@ public class SelectionManager : MonoBehaviour
         RaycastHit hit;
         GameObject hitObject = null;
         
-        Vector3[] offsets = new Vector3[] {
-            Vector3.zero,
-            mainCamera.transform.up * 0.01f,
-            -mainCamera.transform.up * 0.01f,
-            mainCamera.transform.right * 0.01f,
-            -mainCamera.transform.right * 0.01f
-        };
-        
-        foreach (Vector3 offset in offsets)
+        if (Physics.Raycast(ray, out hit, maxDistance, targetLayer))
         {
-            Ray offsetRay = new Ray(mainCamera.transform.position + offset, mainCamera.transform.forward);
-            if (Physics.Raycast(offsetRay, out hit, maxDistance, targetLayer))
+            IClickable interactable = hit.collider.GetComponent<IClickable>();
+            if (interactable == null)
+                interactable = hit.collider.GetComponentInParent<IClickable>();
+            
+            if (interactable != null)
             {
-                IClickable interactable = hit.collider.GetComponent<IClickable>();
-                if (interactable == null)
-                    interactable = hit.collider.GetComponentInParent<IClickable>();
-                
-                if (interactable != null)
+                float range = interactable.GetInteractionRange();
+                if (hit.distance <= range)
                 {
                     hitObject = hit.collider.gameObject;
-                    break;
                 }
             }
         }
@@ -83,29 +79,13 @@ public class SelectionManager : MonoBehaviour
                 SetOutline(hoveredObj, true);
         }
         
-        if (Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && hoveredObj != null)
         {
-            if (hoveredObj != null)
-            {
-                IClickable interactable = hoveredObj.GetComponent<IClickable>();
-                if (interactable == null)
-                    interactable = hoveredObj.GetComponentInParent<IClickable>();
-                
-                if (interactable != null)
-                {
-                    if (selectedObj != null && selectedObj != hoveredObj)
-                        SetOutline(selectedObj, false);
-                    
-                    selectedObj = hoveredObj;
-                    SetOutline(selectedObj, true);
-                    interactable.OnInteract();
-                }
-            }
-            else if (selectedObj != null)
-            {
+            if (selectedObj != null && selectedObj != hoveredObj)
                 SetOutline(selectedObj, false);
-                selectedObj = null;
-            }
+            
+            selectedObj = hoveredObj;
+            SetOutline(selectedObj, true);
         }
         
         if (Input.GetKeyDown(KeyCode.Escape))

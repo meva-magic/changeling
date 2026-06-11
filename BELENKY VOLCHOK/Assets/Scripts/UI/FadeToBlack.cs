@@ -25,6 +25,10 @@ public class FadeToBlack : MonoBehaviour
             fadeImage.color = color;
             fadeImage.gameObject.SetActive(true);
         }
+        else
+        {
+            Debug.LogError("FadeToBlack: fadeImage не назначен в инспекторе!");
+        }
     }
     
     public void FadeOut(System.Action onComplete = null)
@@ -52,30 +56,5 @@ public class FadeToBlack : MonoBehaviour
         fadeImage.color = color;
         
         onComplete?.Invoke();
-    }
-    
-    public void FadeIn()
-    {
-        StartCoroutine(FadeInRoutine());
-    }
-    
-    private IEnumerator FadeInRoutine()
-    {
-        if (fadeImage == null) yield break;
-        
-        float elapsed = 0f;
-        Color color = fadeImage.color;
-        
-        while (elapsed < fadeDuration)
-        {
-            elapsed += Time.deltaTime;
-            float alpha = Mathf.Clamp01(1f - (elapsed / fadeDuration));
-            color.a = alpha;
-            fadeImage.color = color;
-            yield return null;
-        }
-        
-        color.a = 0f;
-        fadeImage.color = color;
     }
 }

@@ -50,10 +50,19 @@ public class Curtain : MonoBehaviour, IClickable
     
     public void OnInteract()
     {
+        if (!IsPlayerInRange()) return;
+        
         if (!isHolding)
         {
             BeginHold();
         }
+    }
+    
+    private bool IsPlayerInRange()
+    {
+        if (playerTransform == null) return true;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= interactionDistance;
     }
     
     private void BeginHold()
@@ -146,23 +155,13 @@ public class Curtain : MonoBehaviour, IClickable
         UpdateProgress(0);
     }
     
-    private bool IsPlayerInRange()
-    {
-        if (playerTransform == null) return true;
-        return Vector3.Distance(transform.position, playerTransform.position) <= interactionDistance;
-    }
-    
     private void UpdateProgress(float normalized)
     {
         if (progressSlider != null)
-        {
             progressSlider.value = normalized * requiredHoldTime;
-        }
         
         if (progressFill != null)
-        {
             progressFill.fillAmount = normalized;
-        }
     }
     
     private void SetOpenState()
@@ -180,13 +179,16 @@ public class Curtain : MonoBehaviour, IClickable
     private void PlaySound()
     {
         if (!string.IsNullOrEmpty(movementSound))
-        {
             AudioManager.instance?.Play(movementSound);
-        }
     }
     
     public string GetPromptKey()
     {
         return "";
+    }
+    
+    public float GetInteractionRange()
+    {
+        return interactionDistance;
     }
 }

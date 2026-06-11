@@ -33,6 +33,12 @@ public class Fireplace : MonoBehaviour, IClickable
         QuestTracker quest = ServiceLocator.Get<QuestTracker>();
         if (quest == null) return;
         
+        if (quest.IsQuestFinished())
+        {
+            Debug.Log("Квест уже завершён, камин не активен");
+            return;
+        }
+        
         QuestStageDefinition stage = quest.GetCurrentStage();
         bool canLight = stage != null && stage.RequiredTag == "Fireplace";
         
@@ -49,7 +55,8 @@ public class Fireplace : MonoBehaviour, IClickable
     private bool IsPlayerInRange()
     {
         if (playerTransform == null) return true;
-        return Vector3.Distance(transform.position, playerTransform.position) <= activationRange;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= activationRange;
     }
     
     private void BeginLighting()
@@ -75,6 +82,8 @@ public class Fireplace : MonoBehaviour, IClickable
     
     private void OnLightingComplete()
     {
+        Debug.Log("Fireplace: OnLightingComplete вызван");
+        
         isLightingInProgress = false;
         isBurning = true;
         
@@ -82,12 +91,16 @@ public class Fireplace : MonoBehaviour, IClickable
         if (firewoodVisual != null) firewoodVisual.SetActive(true);
         
         if (!string.IsNullOrEmpty(finishSound))
-        {
             AudioManager.instance?.Play(finishSound);
-        }
         
         QuestTracker quest = ServiceLocator.Get<QuestTracker>();
-        quest?.CompleteObjective("Fireplace");
+        if (quest != null)
+        {
+            quest.CompleteObjective("Fireplace");
+        }
+        
+        // Убираем камин из слоя Interactable
+        gameObject.layer = LayerMask.NameToLayer("Default");
         
         EventBus.Broadcast(GameEvents.FireplaceLit);
     }
@@ -100,5 +113,10 @@ public class Fireplace : MonoBehaviour, IClickable
     public string GetPromptKey()
     {
         return "";
+    }
+    
+    public float GetInteractionRange()
+    {
+        return activationRange;
     }
 }

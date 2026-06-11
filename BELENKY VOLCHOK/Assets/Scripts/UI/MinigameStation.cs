@@ -18,15 +18,15 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
     [SerializeField] private ParticleSystem fireEffectPrefab;
     
     [Header("Sound Settings")]
-    [SerializeField] private string clickSoundName = "minigame_click";
-    [SerializeField] private string fireSoundName = "minigame_fire_spawn";
+    [SerializeField] private string clickSoundName = "";
+    [SerializeField] private string fireSoundName = "";
     
     private MinigameConfiguration activeConfig;
     private float currentValue;
     private bool isRunning;
-    private bool waitingForEffect;
     private Vector3 savedPlayerPosition;
     private Quaternion savedPlayerRotation;
+    private bool isDestroyed = false;
     
     private void Start()
     {
@@ -34,9 +34,14 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
             minigameCanvas.SetActive(false);
     }
     
+    private void OnDestroy()
+    {
+        isDestroyed = true;
+    }
+    
     private void Update()
     {
-        if (!isRunning || waitingForEffect) return;
+        if (!isRunning || isDestroyed) return;
         
         if (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space))
         {
@@ -63,12 +68,11 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
     
     public void StartMinigame(MinigameConfiguration config)
     {
-        if (isRunning) return;
+        if (isRunning || isDestroyed) return;
         
         activeConfig = config;
         currentValue = 0;
         isRunning = true;
-        waitingForEffect = false;
         
         FreezePlayer();
         
@@ -81,11 +85,12 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         ui?.HideMessage();
         
         EventBus.Broadcast(GameEvents.MinigameStarted);
+        Debug.Log($"MinigameStation: Старт мини-игры {config.Name}");
     }
     
     private void ProcessClick()
     {
-        if (!isRunning || waitingForEffect) return;
+        if (!isRunning || isDestroyed) return;
         
         currentValue = Mathf.Min(currentValue + activeConfig.ClickPower, activeConfig.TargetProgress);
         UpdateDisplay(currentValue / activeConfig.TargetProgress);
@@ -95,6 +100,7 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         
         if (currentValue >= activeConfig.TargetProgress)
         {
+            Debug.Log("MinigameStation: Достигнут 100%, завершаем мини-игру");
             FinishMinigame();
         }
     }
@@ -113,63 +119,61 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
     
     private void FinishMinigame()
     {
-        isRunning = false;
+        if (isDestroyed) return;
         
-        if (activeConfig.SpawnFireOnFinish && fireEffectPrefab != null)
+        isRunning = false;
+        Debug.Log("MinigameStation: FinishMinigame вызван");
+        
+        // Закрываем UI мини-игры
+        if (minigameCanvas != null)
+            minigameCanvas.SetActive(false);
+        
+        // Восстанавливаем игрока
+        RestorePlayer();
+        
+        // Вызываем колбэк завершения
+        if (activeConfig != null && activeConfig.OnFinished != null)
+        {
+            Debug.Log("MinigameStation: Вызов OnFinished");
+            activeConfig.OnFinished();
+        }
+        
+        // Эффект огня (если нужно)
+        if (activeConfig != null && activeConfig.SpawnFireOnFinish && fireEffectPrefab != null)
         {
             Vector3 spawnPosition = activeConfig.LinkedObject != null 
                 ? activeConfig.LinkedObject.transform.position 
                 : Vector3.zero;
             
             ParticleSystem fire = Instantiate(fireEffectPrefab, spawnPosition, Quaternion.identity);
-            fire.Play();
-            Destroy(fire.gameObject, 3f);
+            if (fire != null)
+            {
+                fire.Play();
+                Destroy(fire.gameObject, 3f);
+            }
             
             if (!string.IsNullOrEmpty(fireSoundName))
                 AudioManager.instance?.Play(fireSoundName);
-            
-            waitingForEffect = true;
-            StartCoroutine(DelayedFinish(0.5f));
         }
-        else
-        {
-            CloseMinigame();
-            activeConfig.OnFinished?.Invoke();
-            RestorePlayer();
-        }
+        
+        activeConfig = null;
+        currentValue = 0;
         
         EventBus.Broadcast(GameEvents.MinigameFinished);
     }
     
-    private IEnumerator DelayedFinish(float delay)
-    {
-        yield return new WaitForSeconds(delay);
-        CloseMinigame();
-        activeConfig.OnFinished?.Invoke();
-        RestorePlayer();
-        waitingForEffect = false;
-    }
-    
-    private void CloseMinigame()
-    {
-        if (minigameCanvas != null)
-            minigameCanvas.SetActive(false);
-        
-        activeConfig = null;
-        currentValue = 0;
-        isRunning = false;
-    }
-    
     public void CancelCurrentMinigame()
     {
-        if (!isRunning || waitingForEffect) return;
+        if (!isRunning || isDestroyed) return;
         
         isRunning = false;
         
         if (minigameCanvas != null)
             minigameCanvas.SetActive(false);
         
-        activeConfig?.OnCancelled?.Invoke();
+        if (activeConfig != null && activeConfig.OnCancelled != null)
+            activeConfig.OnCancelled();
+        
         activeConfig = null;
         currentValue = 0;
         
@@ -204,6 +208,8 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
     
     private void RestorePlayer()
     {
+        if (isDestroyed) return;
+        
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null)
         {

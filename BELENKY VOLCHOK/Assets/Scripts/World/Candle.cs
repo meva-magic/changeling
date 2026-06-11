@@ -20,6 +20,7 @@ public class Candle : MonoBehaviour, IClickable
     [SerializeField] private float clickPower = 10f;
     [SerializeField] private float decaySpeed = 5f;
     [SerializeField] private float cooldownPeriod = 2f;
+    [SerializeField] private float interactionRange = 2.5f;
     
     [Header("Feedback")]
     [SerializeField] private string extinguishedMessageKey = "candle_extinguished";
@@ -80,9 +81,7 @@ public class Candle : MonoBehaviour, IClickable
         }
         
         if (timerCanvas.activeSelf != shouldShow)
-        {
             timerCanvas.SetActive(shouldShow);
-        }
     }
     
     private void UpdateTimerDisplay()
@@ -96,10 +95,18 @@ public class Candle : MonoBehaviour, IClickable
     
     public void OnInteract()
     {
+        if (!IsPlayerInRange()) return;
         if (isRelighting) return;
         if (onCooldown) return;
         
         BeginRelighting();
+    }
+    
+    private bool IsPlayerInRange()
+    {
+        if (playerTransform == null) return true;
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        return distance <= interactionRange;
     }
     
     private void BeginRelighting()
@@ -134,9 +141,7 @@ public class Candle : MonoBehaviour, IClickable
         UpdateVisuals();
         
         if (!string.IsNullOrEmpty(relightSound))
-        {
             AudioManager.instance?.Play(relightSound);
-        }
         
         StartCoroutine(CooldownRoutine());
         EventBus.Broadcast(GameEvents.CandleRelit);
@@ -176,18 +181,19 @@ public class Candle : MonoBehaviour, IClickable
         if (candleFlame != null)
         {
             if (isLit && !candleFlame.isPlaying)
-            {
                 candleFlame.Play();
-            }
             else if (!isLit && candleFlame.isPlaying)
-            {
                 candleFlame.Stop();
-            }
         }
     }
     
     public string GetPromptKey()
     {
         return "";
+    }
+    
+    public float GetInteractionRange()
+    {
+        return interactionRange;
     }
 }

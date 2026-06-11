@@ -22,6 +22,7 @@ public class DialogueSystem : MonoBehaviour
     private bool isTyping;
     private bool isVisible;
     private System.Action onCompleteCallback;
+    private bool waitingForInput = false;
     
     private void Awake()
     {
@@ -36,6 +37,23 @@ public class DialogueSystem : MonoBehaviour
             dialoguePanel.SetActive(false);
     }
     
+    private void Update()
+    {
+        if (!isVisible) return;
+        
+        if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
+        {
+            if (isTyping)
+            {
+                SkipTyping();
+            }
+            else if (waitingForInput)
+            {
+                CloseDialogue();
+            }
+        }
+    }
+    
     public void ShowDialogue(string messageKey, System.Action onComplete = null)
     {
         if (isVisible) return;
@@ -48,42 +66,12 @@ public class DialogueSystem : MonoBehaviour
         
         dialoguePanel.SetActive(true);
         isVisible = true;
+        waitingForInput = false;
         
         if (typingCoroutine != null)
             StopCoroutine(typingCoroutine);
         
         typingCoroutine = StartCoroutine(TypeText());
-    }
-    
-    public void SkipOrClose()
-    {
-        if (!isVisible) return;
-        
-        if (isTyping)
-        {
-            SkipTyping();
-        }
-        else
-        {
-            CloseDialogue();
-        }
-    }
-    
-    private void SkipTyping()
-    {
-        if (typingCoroutine != null)
-            StopCoroutine(typingCoroutine);
-        
-        dialogueText.text = currentFullText;
-        isTyping = false;
-    }
-    
-    private void CloseDialogue()
-    {
-        dialoguePanel.SetActive(false);
-        isVisible = false;
-        isTyping = false;
-        onCompleteCallback?.Invoke();
     }
     
     private IEnumerator TypeText()
@@ -95,18 +83,51 @@ public class DialogueSystem : MonoBehaviour
         {
             dialogueText.text += c;
             
-            if (!string.IsNullOrEmpty(letterSoundName) && letterAudioSource != null)
-            {
+            if (!string.IsNullOrEmpty(letterSoundName))
                 AudioManager.instance?.Play(letterSoundName);
-            }
             
             yield return new WaitForSeconds(letterDelay);
         }
         
         isTyping = false;
+        waitingForInput = true;
+    }
+    
+    private void SkipTyping()
+    {
+        if (typingCoroutine != null)
+            StopCoroutine(typingCoroutine);
+        
+        dialogueText.text = currentFullText;
+        isTyping = false;
+        waitingForInput = true;
+    }
+    
+    private void CloseDialogue()
+    {
+        dialoguePanel.SetActive(false);
+        isVisible = false;
+        isTyping = false;
+        waitingForInput = false;
+        
+        onCompleteCallback?.Invoke();
+    }
+    
+    public void ForceClose()
+    {
+        if (typingCoroutine != null)
+            StopCoroutine(typingCoroutine);
+        
+        dialoguePanel.SetActive(false);
+        isVisible = false;
+        isTyping = false;
+        waitingForInput = false;
     }
     
     public bool IsVisible => isVisible;
     
-    private string GetLocalizedText(string key) => key;
+    private string GetLocalizedText(string key)
+    {
+        return key;
+    }
 }

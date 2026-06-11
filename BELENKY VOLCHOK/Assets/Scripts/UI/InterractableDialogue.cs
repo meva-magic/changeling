@@ -2,9 +2,8 @@ using UnityEngine;
 
 public class InteractableDialogue : MonoBehaviour, IClickable
 {
-    [Header("Settings")]
     [SerializeField] private string dialogueKey = "default_dialogue";
-    [SerializeField] private float interactionRange = 2f;
+    [SerializeField] private float interactionRange = 2.5f;
     [SerializeField] private string interactionSound = "interact_press";
     
     [Header("Outline")]
@@ -18,8 +17,7 @@ public class InteractableDialogue : MonoBehaviour, IClickable
     private void Start()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null)
-            playerTransform = player.transform;
+        if (player != null) playerTransform = player.transform;
         
         outlineComponent = GetComponent<Outline>();
         if (outlineComponent != null)
@@ -31,7 +29,6 @@ public class InteractableDialogue : MonoBehaviour, IClickable
         if (playerTransform == null) return;
         
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        bool wasInRange = isInRange;
         isInRange = distance <= interactionRange;
         
         if (outlineComponent != null)
@@ -68,5 +65,10 @@ public class InteractableDialogue : MonoBehaviour, IClickable
     public string GetPromptKey()
     {
         return "";
+    }
+    
+    public float GetInteractionRange()
+    {
+        return interactionRange;
     }
 }

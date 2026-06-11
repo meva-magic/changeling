@@ -22,6 +22,8 @@ public class PlayerMovement : MonoBehaviour
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        if (controller == null)
+            Debug.LogError("PlayerMovement: CharacterController не найден!");
     }
     
     private void Update()
@@ -59,7 +61,8 @@ public class PlayerMovement : MonoBehaviour
     
     private void ExecuteMovement()
     {
-        controller.Move(moveDirection * Time.deltaTime);
+        if (controller != null)
+            controller.Move(moveDirection * Time.deltaTime);
     }
     
     private void HandleFootsteps()

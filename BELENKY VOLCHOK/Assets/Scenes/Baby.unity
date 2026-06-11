@@ -4340,17 +4340,15 @@ MonoBehaviour:
   progressSlider: {fileID: 5210311966328483573}
   playerController: {fileID: 215233859}
   ovenAmbience: {fileID: 1129097837}
+  cameraShake: {fileID: 0}
+  changelingObject: {fileID: 0}
+  changelingStartPoint: {fileID: 0}
+  changelingEndPoint: {fileID: 0}
+  redOverlayImage: {fileID: 0}
+  maxOverlayAlpha: 0.6
   startSound: OvenStart
   clickSound: OvenClick
-  finaleSound: FinaleJumpscare
-  newspaperAmbience: Newspaper
-  creditsAmbience: Credits
-  newspaperPanel: {fileID: 1822398636}
-  newspaperMinDuration: 6
-  creditsPanel: {fileID: 1521479133}
-  creditsScrollRect: {fileID: 1586413190}
-  creditsScrollSpeed: 6
-  mainMenuButton: {fileID: 1704122128}
+  completeSound: 
   interactionIndicator: {fileID: 1202227744}
 --- !u!4 &1376977360
 Transform:
@@ -7611,6 +7609,36 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 406307166}
     m_Modifications:
+    - target: {fileID: 827649746957224603, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 827649746957224603, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 827649746957224603, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 58
+      objectReference: {fileID: 0}
+    - target: {fileID: 1144490654555712203, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_LocalScale.x
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1144490654555712203, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_LocalScale.y
+      value: 1.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 1144490654555712203, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 58
+      objectReference: {fileID: 0}
     - target: {fileID: 1871452063841927188, guid: 7b270be1ab52d35448cc71406b50b58a,
         type: 3}
       propertyPath: m_Pivot.x
@@ -7726,15 +7754,41 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3301355551442421807, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 53f944292bd1e504889576109a774f09,
+        type: 3}
+    - target: {fileID: 3301355551442421807, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_Color.b
+      value: 0.69182384
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301355551442421807, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_Color.g
+      value: 0.69182384
+      objectReference: {fileID: 0}
+    - target: {fileID: 3301355551442421807, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_Color.r
+      value: 0.69182384
+      objectReference: {fileID: 0}
+    - target: {fileID: 7054746917468139992, guid: 7b270be1ab52d35448cc71406b50b58a,
+        type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 46.1
+      objectReference: {fileID: 0}
     - target: {fileID: 8730715983830235037, guid: 7b270be1ab52d35448cc71406b50b58a,
         type: 3}
       propertyPath: m_AnchorMax.x
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8730715983830235037, guid: 7b270be1ab52d35448cc71406b50b58a,
         type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0.518
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8828655779083102125, guid: 7b270be1ab52d35448cc71406b50b58a,
         type: 3}

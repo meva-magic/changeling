@@ -12,6 +12,7 @@ public class UIManager : MonoBehaviour, UserInterface
     
     private Coroutine activeHideCoroutine;
     private bool isMessageActive;
+    private bool isHintActive;
     
     private void Start()
     {
@@ -48,14 +49,20 @@ public class UIManager : MonoBehaviour, UserInterface
     
     public void ShowHint(string hintKey)
     {
+        if (isHintActive) return;
+        
         string hintText = GetLocalizedText(hintKey);
         hintLabel.text = $"[{hintText}]";
         hintWindow.SetActive(true);
+        isHintActive = true;
     }
     
     public void HideHint()
     {
+        if (!isHintActive) return;
+        
         hintWindow.SetActive(false);
+        isHintActive = false;
     }
     
     private IEnumerator HideAfterDelay(float delay)

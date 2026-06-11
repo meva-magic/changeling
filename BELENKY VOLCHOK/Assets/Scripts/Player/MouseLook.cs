@@ -2,57 +2,86 @@ using UnityEngine;
 
 public class MouseLook : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] private Transform cameraHolder;
+    
+    [Header("Sensitivity Settings")]
     [SerializeField] private float sensitivity = 1.5f;
     [SerializeField] private float smoothing = 1.5f;
+    
+    [Header("Vertical Look Limits")]
+    [SerializeField] private bool limitVerticalLook = true;
     [SerializeField] private float minVerticalAngle = -90f;
     [SerializeField] private float maxVerticalAngle = 90f;
     
-    private float horizontalAngle;
-    private float verticalAngle;
-    private float smoothedX;
-    private float smoothedY;
+    private float currentHorizontalLook;
+    private float currentVerticalLook;
+    
+    private float xMousePos;
+    private float yMousePos;
+    private float smoothedMouseX;
+    private float smoothedMouseY;
     
     private void Start()
     {
+        Cursor.lockState = CursorLockMode.Locked;
+        
         if (cameraHolder == null)
         {
             Camera cam = GetComponentInChildren<Camera>();
             if (cam != null && cam.transform.parent == transform)
             {
-                GameObject mount = new GameObject("CameraHolder");
-                mount.transform.SetParent(transform);
-                mount.transform.localPosition = Vector3.zero;
-                mount.transform.localRotation = Quaternion.identity;
-                cam.transform.SetParent(mount.transform);
-                cameraHolder = mount.transform;
+                GameObject holder = new GameObject("CameraHolder");
+                holder.transform.SetParent(transform);
+                holder.transform.localPosition = Vector3.zero;
+                holder.transform.localRotation = Quaternion.identity;
+                
+                cam.transform.SetParent(holder.transform);
+                cameraHolder = holder.transform;
             }
         }
-        
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
     }
     
     private void Update()
     {
-        if (ServiceLocator.Get<MinigameStarter>()?.IsMinigameActive == true) return;
+        MinigameStarter minigame = ServiceLocator.Get<MinigameStarter>();
+        if (minigame != null && minigame.IsMinigameActive) return;
         
-        float mouseX = Input.GetAxisRaw("Mouse X");
-        float mouseY = Input.GetAxisRaw("Mouse Y");
+        GetInput();
+        ModifyInput();
+        MovePlayer();
+    }
+    
+    private void GetInput()
+    {
+        xMousePos = Input.GetAxisRaw("Mouse X");
+        yMousePos = Input.GetAxisRaw("Mouse Y");
+    }
+    
+    private void ModifyInput()
+    {
+        xMousePos *= sensitivity;
+        yMousePos *= sensitivity;
         
-        mouseX *= sensitivity;
-        mouseY *= sensitivity;
+        smoothedMouseX = Mathf.Lerp(smoothedMouseX, xMousePos, 1f / smoothing);
+        smoothedMouseY = Mathf.Lerp(smoothedMouseY, yMousePos, 1f / smoothing);
+    }
+    
+    private void MovePlayer()
+    {
+        currentHorizontalLook += smoothedMouseX;
+        transform.localRotation = Quaternion.AngleAxis(currentHorizontalLook, Vector3.up);
         
-        smoothedX = Mathf.Lerp(smoothedX, mouseX, 1f / smoothing);
-        smoothedY = Mathf.Lerp(smoothedY, mouseY, 1f / smoothing);
+        currentVerticalLook -= smoothedMouseY;
         
-        horizontalAngle += smoothedX;
-        transform.localRotation = Quaternion.AngleAxis(horizontalAngle, Vector3.up);
-        
-        verticalAngle -= smoothedY;
-        verticalAngle = Mathf.Clamp(verticalAngle, minVerticalAngle, maxVerticalAngle);
+        if (limitVerticalLook)
+        {
+            currentVerticalLook = Mathf.Clamp(currentVerticalLook, minVerticalAngle, maxVerticalAngle);
+        }
         
         if (cameraHolder != null)
-            cameraHolder.localRotation = Quaternion.Euler(verticalAngle, 0f, 0f);
+        {
+            cameraHolder.localRotation = Quaternion.Euler(currentVerticalLook, 0f, 0f);
+        }
     }
 }

@@ -2,31 +2,43 @@ using UnityEngine;
 
 public class Firewood : MonoBehaviour, IClickable
 {
-    [SerializeField] private string targetTag = "Firewood";
-    [SerializeField] private float pickupRange = 2f;
+    [SerializeField] private float interactionRange = 2f;
     
     private bool wasCollected;
-    private Transform playerTransform;
     
-    private void Start()
+    private void OnDestroy()
     {
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTransform = player.transform;
+        // При уничтожении объекта убираем подсказку
+        if (InteractionPrompter.Instance != null)
+        {
+            UserInterface ui = ServiceLocator.Get<UserInterface>();
+            if (ui != null)
+                ui.HideHint();
+        }
     }
     
     public void OnInteract()
     {
-        if (!IsPlayerInRange()) return;
         if (wasCollected) return;
+        
+        if (!IsPlayerInRange())
+        {
+            Debug.Log("Слишком далеко от дров");
+            return;
+        }
         
         QuestTracker quest = ServiceLocator.Get<QuestTracker>();
         if (quest == null) return;
         
         QuestStageDefinition stage = quest.GetCurrentStage();
-        if (stage != null && stage.RequiredTag == targetTag && stage.RequiredQuantity > 0)
+        if (stage != null && stage.RequiredTag == "Firewood" && stage.RequiredQuantity > 0)
         {
             wasCollected = true;
-            quest.RecordCollectedItem(targetTag);
+            quest.RecordCollectedItem("Firewood");
+            
+            // Убираем обводку
+            RemoveOutline();
+            
             Destroy(gameObject);
         }
         else
@@ -36,14 +48,22 @@ public class Firewood : MonoBehaviour, IClickable
         }
     }
     
-    private bool IsPlayerInRange()
+    private void RemoveOutline()
     {
-        if (playerTransform == null) return true;
-        return Vector3.Distance(transform.position, playerTransform.position) <= pickupRange;
+        Outline outline = GetComponent<Outline>();
+        if (outline != null)
+            outline.enabled = false;
     }
     
-    public string GetPromptKey()
+    private bool IsPlayerInRange()
     {
-        return "";
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player == null) return true;
+        
+        float distance = Vector3.Distance(transform.position, player.transform.position);
+        return distance <= interactionRange;
     }
+    
+    public string GetPromptKey() { return ""; }
+    public float GetInteractionRange() { return interactionRange; }
 }

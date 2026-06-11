@@ -72,6 +72,7 @@ public class QuestJournal : MonoBehaviour, QuestTracker
         
         wasVisible = true;
         EventBus.Broadcast(GameEvents.QuestStarted);
+        Debug.Log($"QuestJournal: Квест начат, стадия 0, RequiredTag={GetCurrentStage()?.RequiredTag}");
     }
     
     public void RecordCollectedItem(string itemTag)
@@ -79,7 +80,13 @@ public class QuestJournal : MonoBehaviour, QuestTracker
         if (!isQuestActive) return;
         
         QuestStageDefinition stage = GetCurrentStage();
-        if (stage == null) return;
+        if (stage == null)
+        {
+            Debug.Log("QuestJournal: Нет активной стадии");
+            return;
+        }
+        
+        Debug.Log($"QuestJournal: RecordCollectedItem, stage.RequiredTag={stage.RequiredTag}, itemTag={itemTag}, stageProgress={stageProgress}, required={stage.RequiredQuantity}");
         
         if (stage.RequiredTag == itemTag && stageProgress < stage.RequiredQuantity)
         {
@@ -94,6 +101,7 @@ public class QuestJournal : MonoBehaviour, QuestTracker
             
             if (stageProgress >= stage.RequiredQuantity)
             {
+                Debug.Log("QuestJournal: Сбор завершён, переходим на следующую стадию");
                 AdvanceToNextStage();
             }
         }
@@ -104,11 +112,22 @@ public class QuestJournal : MonoBehaviour, QuestTracker
         if (!isQuestActive) return;
         
         QuestStageDefinition stage = GetCurrentStage();
-        if (stage == null) return;
+        if (stage == null)
+        {
+            Debug.Log("QuestJournal: CompleteObjective - нет активной стадии");
+            return;
+        }
+        
+        Debug.Log($"QuestJournal: CompleteObjective вызван, stage.RequiredTag={stage.RequiredTag}, objectiveTag={objectiveTag}, stage.RequiredQuantity={stage.RequiredQuantity}");
         
         if (stage.RequiredTag == objectiveTag && stage.RequiredQuantity == 0)
         {
+            Debug.Log("QuestJournal: CompleteObjective - переходим на следующую стадию");
             AdvanceToNextStage();
+        }
+        else
+        {
+            Debug.Log("QuestJournal: CompleteObjective - условия не совпадают");
         }
     }
     
@@ -126,6 +145,7 @@ public class QuestJournal : MonoBehaviour, QuestTracker
             collectedItems.Clear();
             RefreshUI();
             EventBus.Broadcast(GameEvents.QuestStageAdvanced);
+            Debug.Log($"QuestJournal: Переход на стадию {activeStage}, RequiredTag={GetCurrentStage()?.RequiredTag}");
         }
     }
     
@@ -139,6 +159,7 @@ public class QuestJournal : MonoBehaviour, QuestTracker
             wasVisible = false;
         }
         
+        Debug.Log("QuestJournal: Квест завершён, отправляем событие QuestFinished");
         EventBus.Broadcast(GameEvents.QuestFinished);
     }
     

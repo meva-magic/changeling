@@ -4,18 +4,12 @@ public class InputReader : MonoBehaviour
 {
     public static InputReader Instance { get; private set; }
     
-    [Header("Key Bindings")]
-    public KeyCode primaryKey = KeyCode.E;
-    public KeyCode secondaryKey = KeyCode.Space;
-    public bool allowMouseClick = true;
-    
-    [Header("Audio")]
+    [SerializeField] private bool allowMouseClick = true;
     [SerializeField] private string interactSound = "interact_press";
+    [SerializeField] private float interactionCooldown = 0.2f;
     
-    private Camera playerCamera;
-    private float raycastRange = 5f;
-    private LayerMask interactionMask = -1;
     private float lastActionTime;
+    private SelectionManager selectionManager;
     
     private void Awake()
     {
@@ -29,7 +23,9 @@ public class InputReader : MonoBehaviour
     
     private void Start()
     {
-        playerCamera = Camera.main;
+        selectionManager = FindObjectOfType<SelectionManager>();
+        if (selectionManager == null)
+            Debug.LogError("InputReader: SelectionManager не найден в сцене!");
     }
     
     private void Update()
@@ -37,57 +33,37 @@ public class InputReader : MonoBehaviour
         MinigameStarter minigame = ServiceLocator.Get<MinigameStarter>();
         if (minigame != null && minigame.IsMinigameActive) return;
         
-        // Диалог имеет приоритет
-        if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsVisible)
-        {
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0))
-            {
-                DialogueSystem.Instance.SkipOrClose();
-                return;
-            }
-        }
+        if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsVisible) return;
         
-        if (IsActionPressed() && Time.time >= lastActionTime + 0.1f)
+        bool pressed = Input.GetKeyDown(KeyCode.Space) || (allowMouseClick && Input.GetMouseButtonDown(0));
+        
+        if (pressed && Time.time >= lastActionTime + interactionCooldown)
         {
-            AttemptInteraction();
+            TryInteract();
         }
     }
     
-    private bool IsActionPressed()
+    private void TryInteract()
     {
-        return Input.GetKeyDown(primaryKey) ||
-               Input.GetKeyDown(secondaryKey) ||
-               (allowMouseClick && Input.GetMouseButtonDown(0));
-    }
-    
-    private void AttemptInteraction()
-    {
-        if (playerCamera == null) return;
+        if (selectionManager == null) return;
         
-        Ray ray = new Ray(playerCamera.transform.position, playerCamera.transform.forward);
+        GameObject hoveredObject = selectionManager.GetHoveredObject();
         
-        if (Physics.Raycast(ray, out RaycastHit hit, raycastRange, interactionMask))
+        if (hoveredObject != null)
         {
-            IClickable interactable = hit.collider.GetComponent<IClickable>();
+            IClickable interactable = hoveredObject.GetComponent<IClickable>();
             if (interactable == null)
-            {
-                interactable = hit.collider.GetComponentInParent<IClickable>();
-            }
+                interactable = hoveredObject.GetComponentInParent<IClickable>();
             
             if (interactable != null)
             {
                 lastActionTime = Time.time;
                 
                 if (!string.IsNullOrEmpty(interactSound))
-                {
                     AudioManager.instance?.Play(interactSound);
-                }
                 
                 interactable.OnInteract();
             }
         }
     }
-    
-    public void SetRaycastRange(float range) { raycastRange = range; }
-    public void SetInteractionMask(LayerMask mask) { interactionMask = mask; }
 }
