@@ -8,10 +8,16 @@ public class Fireplace : MonoBehaviour, IClickable
     [SerializeField] private float decayStrength = 5f;
     [SerializeField] private float activationRange = 3f;
     [SerializeField] private string finishSound = "minigame_fire_spawn";
+    [SerializeField] private GameObject outlineTarget;
     
     private bool isBurning;
     private bool isLightingInProgress;
     private Transform playerTransform;
+    
+    private GameObject EffectiveOutlineTarget
+    {
+        get { return outlineTarget != null ? outlineTarget : gameObject; }
+    }
     
     private void Start()
     {
@@ -99,9 +105,7 @@ public class Fireplace : MonoBehaviour, IClickable
             quest.CompleteObjective("Fireplace");
         }
         
-        // Убираем камин из слоя Interactable
         gameObject.layer = LayerMask.NameToLayer("Default");
-        
         EventBus.Broadcast(GameEvents.FireplaceLit);
     }
     
@@ -118,5 +122,10 @@ public class Fireplace : MonoBehaviour, IClickable
     public float GetInteractionRange()
     {
         return activationRange;
+    }
+    
+    public GameObject GetOutlineTarget()
+    {
+        return EffectiveOutlineTarget;
     }
 }

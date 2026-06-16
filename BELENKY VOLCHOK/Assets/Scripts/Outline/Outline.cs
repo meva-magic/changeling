@@ -89,15 +89,11 @@ public class Outline : MonoBehaviour
             {
                 mr.material.SetColor("_OutlineColor", OutlineColor);
                 
-                // Calculate scale-adjusted width
                 Transform parent = obj.transform.parent;
                 if (parent != null)
                 {
-                    // Get the largest scale axis to normalize
                     Vector3 lossyScale = parent.lossyScale;
                     float maxScale = Mathf.Max(lossyScale.x, lossyScale.y, lossyScale.z);
-                    
-                    // Divide width by scale so it looks consistent
                     float adjustedWidth = OutlineWidth / maxScale;
                     mr.material.SetFloat("_OutlineWidth", adjustedWidth);
                 }

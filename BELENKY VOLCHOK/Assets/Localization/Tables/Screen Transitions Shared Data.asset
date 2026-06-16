@@ -23,6 +23,10 @@ MonoBehaviour:
     m_Key: transitions.prologue
     m_Metadata:
       m_Items: []
+  - m_Id: 15130989406707712
+    m_Key: transition.hint
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

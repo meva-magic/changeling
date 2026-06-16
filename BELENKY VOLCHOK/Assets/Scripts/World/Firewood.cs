@@ -3,18 +3,13 @@ using UnityEngine;
 public class Firewood : MonoBehaviour, IClickable
 {
     [SerializeField] private float interactionRange = 2f;
+    [SerializeField] private GameObject outlineTarget;
     
     private bool wasCollected;
     
-    private void OnDestroy()
+    private GameObject EffectiveOutlineTarget
     {
-        // При уничтожении объекта убираем подсказку
-        if (InteractionPrompter.Instance != null)
-        {
-            UserInterface ui = ServiceLocator.Get<UserInterface>();
-            if (ui != null)
-                ui.HideHint();
-        }
+        get { return outlineTarget != null ? outlineTarget : gameObject; }
     }
     
     public void OnInteract()
@@ -36,9 +31,7 @@ public class Firewood : MonoBehaviour, IClickable
             wasCollected = true;
             quest.RecordCollectedItem("Firewood");
             
-            // Убираем обводку
             RemoveOutline();
-            
             Destroy(gameObject);
         }
         else
@@ -50,7 +43,7 @@ public class Firewood : MonoBehaviour, IClickable
     
     private void RemoveOutline()
     {
-        Outline outline = GetComponent<Outline>();
+        Outline outline = EffectiveOutlineTarget.GetComponent<Outline>();
         if (outline != null)
             outline.enabled = false;
     }
@@ -66,4 +59,5 @@ public class Firewood : MonoBehaviour, IClickable
     
     public string GetPromptKey() { return ""; }
     public float GetInteractionRange() { return interactionRange; }
+    public GameObject GetOutlineTarget() { return EffectiveOutlineTarget; }
 }

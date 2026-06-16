@@ -4,20 +4,20 @@ using System.Collections;
 
 public class MinigameStation : MonoBehaviour, MinigameStarter
 {
-    [Header("UI References")]
+    [Header("UI References (Optional)")]
     [SerializeField] private GameObject minigameCanvas;
     [SerializeField] private Slider progressBar;
     [SerializeField] private Image matchIcon;
     [SerializeField] private RectTransform matchStartPoint;
     [SerializeField] private RectTransform matchEndPoint;
     
-    [Header("Animation")]
+    [Header("Animation (Optional)")]
     [SerializeField] private AnimationCurve slideCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     
-    [Header("Visual Effects")]
+    [Header("Visual Effects (Optional)")]
     [SerializeField] private ParticleSystem fireEffectPrefab;
     
-    [Header("Sound Settings")]
+    [Header("Sound Settings (Optional)")]
     [SerializeField] private string clickSoundName = "";
     [SerializeField] private string fireSoundName = "";
     
@@ -124,21 +124,17 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         isRunning = false;
         Debug.Log("MinigameStation: FinishMinigame вызван");
         
-        // Закрываем UI мини-игры
         if (minigameCanvas != null)
             minigameCanvas.SetActive(false);
         
-        // Восстанавливаем игрока
         RestorePlayer();
         
-        // Вызываем колбэк завершения
         if (activeConfig != null && activeConfig.OnFinished != null)
         {
             Debug.Log("MinigameStation: Вызов OnFinished");
             activeConfig.OnFinished();
         }
         
-        // Эффект огня (если нужно)
         if (activeConfig != null && activeConfig.SpawnFireOnFinish && fireEffectPrefab != null)
         {
             Vector3 spawnPosition = activeConfig.LinkedObject != null 
