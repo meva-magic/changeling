@@ -17,9 +17,9 @@ public class CandleSystem : MonoBehaviour, IClickable
     [SerializeField] private string extinguishedMessageKey = "candle_extinguished";
     [SerializeField] private float messageDuration = 3f;
     [SerializeField] private string relightSound = "candle_relight";
-    [SerializeField] private float threatTime = 45f;
-    [SerializeField] private float threatFadeStart = 25f;
     [SerializeField] private GameObject outlineTarget;
+    [SerializeField] private GameObject candleObject;
+    [SerializeField] private GameObject candleObjectAlternative;
     
     private float remainingTime;
     private bool isLit = true;
@@ -27,6 +27,8 @@ public class CandleSystem : MonoBehaviour, IClickable
     private bool onCooldown;
     private Transform playerTransform;
     private bool hasShownExtinguishMessage = false;
+    private bool counterAdded = false;
+    private bool isMinigameActive = false;
     
     private GameObject EffectiveOutlineTarget
     {
@@ -41,6 +43,13 @@ public class CandleSystem : MonoBehaviour, IClickable
         if (timerCanvas != null) timerCanvas.SetActive(false);
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) playerTransform = player.transform;
+        
+        if (candleObject != null) candleObject.SetActive(true);
+        if (candleObjectAlternative != null) candleObjectAlternative.SetActive(false);
+        
+        displayRadius = interactionRange;
+        
+        ThreatSystem.Instance?.SetMinOverlayAlpha(0.6f);
     }
     
     private void Update()
@@ -62,13 +71,12 @@ public class CandleSystem : MonoBehaviour, IClickable
     private void UpdateTimerVisibility()
     {
         if (timerCanvas == null || playerTransform == null) return;
-        bool shouldShow = isLit && !isRelighting;
-        if (shouldShow)
-        {
-            float distance = Vector3.Distance(transform.position, playerTransform.position);
-            shouldShow = distance <= displayRadius;
-        }
-        if (timerCanvas.activeSelf != shouldShow) timerCanvas.SetActive(shouldShow);
+        
+        float distance = Vector3.Distance(transform.position, playerTransform.position);
+        bool shouldShow = distance <= displayRadius && !isRelighting;
+        
+        if (timerCanvas.activeSelf != shouldShow)
+            timerCanvas.SetActive(shouldShow);
     }
     
     private void UpdateTimerDisplay()
@@ -82,6 +90,8 @@ public class CandleSystem : MonoBehaviour, IClickable
     
     public void OnInteract()
     {
+        if (isLit) return;
+        
         if (!IsPlayerInRange()) return;
         if (isRelighting) return;
         if (onCooldown) return;
@@ -99,6 +109,7 @@ public class CandleSystem : MonoBehaviour, IClickable
         MinigameStarter minigame = ServiceLocator.Get<MinigameStarter>();
         if (minigame == null) return;
         isRelighting = true;
+        isMinigameActive = true;
         if (timerCanvas != null) timerCanvas.SetActive(false);
         MinigameConfiguration config = new MinigameConfiguration();
         config.Name = "Candle";
@@ -110,16 +121,25 @@ public class CandleSystem : MonoBehaviour, IClickable
         config.OnFinished = OnRelightComplete;
         config.OnCancelled = OnRelightCancelled;
         minigame.StartMinigame(config);
+        
+        ThreatSystem.Instance?.PauseCounter();
     }
     
     private void OnRelightComplete()
     {
         isRelighting = false;
         isLit = true;
+        isMinigameActive = false;
         remainingTime = maxBurnTime;
         UpdateTimerDisplay();
         UpdateVisuals();
-        ThreatTimer.Instance?.StopThreatTimer();
+        
+        if (counterAdded)
+        {
+            counterAdded = false;
+            ThreatSystem.Instance?.RemoveCounterSource();
+        }
+        
         if (!string.IsNullOrEmpty(relightSound)) AudioManager.instance?.Play(relightSound);
         StartCoroutine(CooldownRoutine());
         EventBus.Broadcast(GameEvents.CandleRelit);
@@ -128,6 +148,7 @@ public class CandleSystem : MonoBehaviour, IClickable
     private void OnRelightCancelled()
     {
         isRelighting = false;
+        isMinigameActive = false;
     }
     
     private IEnumerator CooldownRoutine()
@@ -147,8 +168,20 @@ public class CandleSystem : MonoBehaviour, IClickable
             UserInterface ui = ServiceLocator.Get<UserInterface>();
             ui?.ShowMessage(extinguishedMessageKey, messageDuration);
         }
-        ThreatTimer.Instance?.StartThreatTimer(threatTime, threatFadeStart, () => KillPlayer());
+        
+        if (!counterAdded)
+        {
+            counterAdded = true;
+            ThreatSystem.Instance?.AddCounterSource();
+        }
+        
         EventBus.Broadcast(GameEvents.CandleExtinguished);
+    }
+    
+    public void SwitchToAlternativeCandle()
+    {
+        if (candleObject != null) candleObject.SetActive(false);
+        if (candleObjectAlternative != null) candleObjectAlternative.SetActive(true);
     }
     
     private void KillPlayer()

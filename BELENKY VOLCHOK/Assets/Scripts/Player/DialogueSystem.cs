@@ -29,6 +29,7 @@ public class DialogueSystem : MonoBehaviour
     private CursorController cursorController;
     private bool wasCursorLocked;
     private bool isDialogueActive = false;
+    private bool shouldRestorePlayerControls = true;
     
     private void Awake()
     {
@@ -69,18 +70,15 @@ public class DialogueSystem : MonoBehaviour
         }
     }
     
-    public void ShowDialogue(string messageKey, System.Action onComplete = null)
+    public void ShowDialogue(string messageKey, System.Action onComplete = null, bool restoreControls = true)
     {
-        if (isDialogueActive)
-        {
-            Debug.Log("DialogueSystem: Диалог уже активен, игнорируем");
-            return;
-        }
+        if (isDialogueActive) return;
         
         string localizedText = GetLocalizedText(messageKey);
         if (string.IsNullOrEmpty(localizedText)) return;
         
         isDialogueActive = true;
+        shouldRestorePlayerControls = restoreControls;
         currentFullText = localizedText;
         onCompleteCallback = onComplete;
         
@@ -168,7 +166,8 @@ public class DialogueSystem : MonoBehaviour
         
         EventBus.Broadcast(GameEvents.MinigameFinished);
         
-        if (blockPlayerInput && playerMovement != null)
+        // Восстанавливаем управление только если нужно
+        if (shouldRestorePlayerControls && blockPlayerInput && playerMovement != null)
         {
             playerMovement.SetMovementEnabled(true);
             if (cursorController != null && wasCursorLocked)
@@ -201,7 +200,7 @@ public class DialogueSystem : MonoBehaviour
         
         EventBus.Broadcast(GameEvents.MinigameFinished);
         
-        if (blockPlayerInput && playerMovement != null)
+        if (shouldRestorePlayerControls && blockPlayerInput && playerMovement != null)
         {
             playerMovement.SetMovementEnabled(true);
             if (cursorController != null && wasCursorLocked)

@@ -22,23 +22,12 @@ public class InputReader : MonoBehaviour
             return;
         }
         Instance = this;
-        Debug.Log("InputReader: Инициализирован");
     }
     
     private void Start()
     {
         playerCamera = Camera.main;
         selectionManager = FindObjectOfType<SelectionManager>();
-        
-        if (playerCamera == null)
-            Debug.LogError("InputReader: Camera.main не найдена!");
-        else
-            Debug.Log("InputReader: Camera.main найдена");
-            
-        if (selectionManager == null)
-            Debug.LogError("InputReader: SelectionManager не найден!");
-        else
-            Debug.Log("InputReader: SelectionManager найден");
     }
     
     private void Update()
@@ -52,7 +41,6 @@ public class InputReader : MonoBehaviour
         
         if (pressed && Time.time >= lastActionTime + interactionCooldown)
         {
-            Debug.Log("InputReader: Нажата кнопка взаимодействия (Space или Mouse)");
             TryInteract();
         }
     }
@@ -64,8 +52,6 @@ public class InputReader : MonoBehaviour
             GameObject hoveredObject = selectionManager.GetHoveredObject();
             if (hoveredObject != null)
             {
-                Debug.Log($"InputReader: Наведён объект: {hoveredObject.name}");
-                
                 IClickable interactable = hoveredObject.GetComponent<IClickable>();
                 if (interactable == null)
                     interactable = hoveredObject.GetComponentInParent<IClickable>();
@@ -77,23 +63,9 @@ public class InputReader : MonoBehaviour
                     if (!string.IsNullOrEmpty(interactSound))
                         AudioManager.instance?.Play(interactSound);
                     
-                    Debug.Log($"InputReader: Вызов OnInteract() на {hoveredObject.name}");
                     interactable.OnInteract();
-                    return;
-                }
-                else
-                {
-                    Debug.Log($"InputReader: Объект {hoveredObject.name} не реализует IClickable");
                 }
             }
-            else
-            {
-                Debug.Log("InputReader: Нет наведённого объекта");
-            }
-        }
-        else
-        {
-            Debug.LogError("InputReader: SelectionManager отсутствует!");
         }
     }
 }

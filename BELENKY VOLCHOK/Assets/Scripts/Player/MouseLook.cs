@@ -47,6 +47,8 @@ public class MouseLook : MonoBehaviour
         MinigameStarter minigame = ServiceLocator.Get<MinigameStarter>();
         if (minigame != null && minigame.IsMinigameActive) return;
         
+        if (DialogueSystem.Instance != null && DialogueSystem.Instance.IsDialogueActive) return;
+        
         GetInput();
         ModifyInput();
         MovePlayer();

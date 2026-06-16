@@ -28,8 +28,6 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     
     [Header("Settings")]
     [SerializeField] private float interactionRange = 3f;
-    [SerializeField] private float timeLimit = 30f;
-    [SerializeField] private float threatFadeStart = 15f;
     [SerializeField] private GameObject outlineTarget;
     [SerializeField] private float knockMessageDelay = 5f;
     [SerializeField] private string knockMessageKey = "door_knock_message";
@@ -43,7 +41,6 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     private int currentRiddleIndex = 0;
     private int currentLineIndex = 0;
     private bool waitingForAnswer = false;
-    private Coroutine timeLimitCoroutine;
     private Coroutine typingCoroutine;
     private string currentFullText;
     private GameObject spawnedMonster;
@@ -54,7 +51,16 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     private Transform playerTransform;
     private bool hasShownKnockMessage = false;
     private Coroutine knockMessageCoroutine;
-    private bool isUnlocked = true;
+    private bool isUnlocked = false;
+    private bool isMinigameStarted = false;
+    private bool knockTimerStarted = false;
+    private bool isWaitingForInput = false;
+    private PlayerMovement playerMovement;
+    private MouseLook mouseLook;
+    private CharacterController characterController;
+    private Vector3 savedPosition;
+    private Quaternion savedRotation;
+    private bool isFrozen = false;
     
     private GameObject EffectiveOutlineTarget
     {
@@ -82,13 +88,13 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
         openRotation = closedRotation * Quaternion.Euler(0, openAngle, 0);
         
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTransform = player.transform;
-    }
-    
-    private void OnDestroy()
-    {
-        if (knockMessageCoroutine != null)
-            StopCoroutine(knockMessageCoroutine);
+        if (player != null)
+        {
+            playerTransform = player.transform;
+            playerMovement = player.GetComponent<PlayerMovement>();
+            mouseLook = player.GetComponent<MouseLook>();
+            characterController = player.GetComponent<CharacterController>();
+        }
     }
     
     private void Update()
@@ -96,6 +102,12 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
         if (!isActive || waitingForAnswer || isDead) return;
         if (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)) NextLine();
         if (isDoorOpen) ApplyDoorAnimation();
+        
+        if (isFrozen && playerTransform != null)
+        {
+            playerTransform.position = savedPosition;
+            playerTransform.rotation = savedRotation;
+        }
     }
     
     private void ApplyDoorAnimation()
@@ -105,41 +117,70 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     
     public void OnInteract()
     {
-        if (!isUnlocked) return;
+        if (!isUnlocked)
+        {
+            Debug.Log("DoorRiddleMinigame: Дверь ещё не разблокирована");
+            return;
+        }
+        
         if (!IsPlayerInRange()) return;
         if (isActive || isDoorOpen) return;
         
-        if (!hasShownKnockMessage)
+        if (knockMessageCoroutine != null)
         {
-            hasShownKnockMessage = true;
-            ShowKnockMessage();
+            StopCoroutine(knockMessageCoroutine);
+            knockMessageCoroutine = null;
+            UserInterface ui = ServiceLocator.Get<UserInterface>();
+            if (ui != null) ui.HideMessage();
         }
         
+        Debug.Log("DoorRiddleMinigame: OnInteract -> StartMinigame");
         StartMinigame();
     }
     
     public void SetUnlocked(bool unlocked)
     {
         isUnlocked = unlocked;
-    }
-    
-    private void ShowKnockMessage()
-    {
-        if (knockMessageCoroutine != null)
-            StopCoroutine(knockMessageCoroutine);
+        Debug.Log($"DoorRiddleMinigame: Дверь разблокирована = {unlocked}");
         
-        knockMessageCoroutine = StartCoroutine(ShowKnockMessageRoutine());
+        if (isUnlocked && !knockTimerStarted)
+        {
+            knockTimerStarted = true;
+            AudioManager.instance?.Play(knockSound);
+            knockMessageCoroutine = StartCoroutine(KnockMessageTimer());
+        }
+        
+        if (isUnlocked && cachedOutline != null)
+        {
+            cachedOutline.enabled = true;
+        }
     }
     
-    private IEnumerator ShowKnockMessageRoutine()
+    public bool IsActive()
+    {
+        return isActive;
+    }
+    
+    private IEnumerator KnockMessageTimer()
     {
         yield return new WaitForSeconds(knockMessageDelay);
         
-        UserInterface ui = ServiceLocator.Get<UserInterface>();
-        if (ui != null)
+        if (!isActive && !isMinigameStarted)
         {
-            ui.ShowMessage(knockMessageKey, knockMessageDuration);
+            UserInterface ui = ServiceLocator.Get<UserInterface>();
+            if (ui != null)
+            {
+                ui.ShowMessage(knockMessageKey, knockMessageDuration);
+                hasShownKnockMessage = true;
+            }
         }
+        
+        knockMessageCoroutine = null;
+    }
+    
+    public bool IsUnlocked()
+    {
+        return isUnlocked;
     }
     
     private bool IsPlayerInRange()
@@ -165,26 +206,32 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     
     private void StartMinigame()
     {
+        Debug.Log("DoorRiddleMinigame: StartMinigame");
         isActive = true;
+        isMinigameStarted = true;
         currentRiddleIndex = 0;
+        
         if (cachedOutline != null) cachedOutline.enabled = false;
+        
         FreezePlayer(true);
+        
         if (minigamePanel != null) minigamePanel.SetActive(true);
         SetButtonsVisible(false);
-        StartCoroutine(PlayKnockAndStart());
-    }
-    
-    private IEnumerator PlayKnockAndStart()
-    {
-        AudioManager.instance?.Play(knockSound);
-        yield return new WaitForSeconds(1f);
+        
+        ThreatSystem.Instance?.StopCounterPermanently();
+        
+        Debug.Log("DoorRiddleMinigame: Счётчик угрозы полностью остановлен");
+        
         StartRiddle();
     }
     
     private void StartRiddle()
     {
+        Debug.Log($"DoorRiddleMinigame: StartRiddle, riddles.Count={riddles.Count}, currentRiddleIndex={currentRiddleIndex}");
+        
         if (currentRiddleIndex >= riddles.Count)
         {
+            Debug.Log("DoorRiddleMinigame: Все загадки пройдены -> CompleteMinigame");
             CompleteMinigame();
             return;
         }
@@ -192,6 +239,9 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
         currentLineIndex = 0;
         waitingForAnswer = false;
         SetButtonsVisible(false);
+        
+        Debug.Log($"DoorRiddleMinigame: Обработка загадки {currentRiddleIndex}, preLines.Count={entry.preLines?.Count}");
+        
         if (entry.preLines != null && entry.preLines.Count > 0)
         {
             ShowTextLine(entry.preLines[0], () => {
@@ -202,27 +252,39 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
                     ShowRiddle(entry);
             });
         }
-        else ShowRiddle(entry);
+        else
+        {
+            Debug.Log("DoorRiddleMinigame: Нет preLines, сразу показываем загадку");
+            ShowRiddle(entry);
+        }
     }
     
     private void ShowRiddle(RiddleEntry entry)
     {
+        Debug.Log($"DoorRiddleMinigame: ShowRiddle, riddleTextKey={entry.riddleTextKey}");
+        
         ShowTextLine(entry.riddleTextKey, () => {
             waitingForAnswer = true;
+            isWaitingForInput = true;
             SetButtonsVisible(true);
             SetButtonTexts(entry.leftAnswerKey, entry.rightAnswerKey);
-            ThreatTimer.Instance?.StartThreatTimer(timeLimit, threatFadeStart, () => TimeoutKill());
+            Debug.Log($"DoorRiddleMinigame: Кнопки показаны. Left: {entry.leftAnswerKey}, Right: {entry.rightAnswerKey}");
         });
     }
     
     private void OnAnswerChosen(int answerIndex)
     {
+        Debug.Log($"DoorRiddleMinigame: OnAnswerChosen, answerIndex={answerIndex}");
+        
         if (!waitingForAnswer) return;
         waitingForAnswer = false;
+        isWaitingForInput = false;
         SetButtonsVisible(false);
-        ThreatTimer.Instance?.StopThreatTimer();
         RiddleEntry entry = riddles[currentRiddleIndex];
         bool isCorrect = (answerIndex == entry.correctAnswer);
+        
+        Debug.Log($"DoorRiddleMinigame: Ответ {(isCorrect ? "ПРАВИЛЬНЫЙ" : "НЕПРАВИЛЬНЫЙ")}");
+        
         if (isCorrect)
         {
             if (entry.postLines != null && entry.postLines.Count > 0)
@@ -283,7 +345,9 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     
     private void CompleteMinigame()
     {
+        Debug.Log("DoorRiddleMinigame: CompleteMinigame");
         isActive = false;
+        isWaitingForInput = false;
         if (cachedOutline != null) cachedOutline.enabled = true;
         FreezePlayer(false);
         if (minigamePanel != null) minigamePanel.SetActive(false);
@@ -292,6 +356,7 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
         if (finalMonster != null)
         {
             finalMonster.gameObject.SetActive(true);
+            Debug.Log("DoorRiddleMinigame: Финальный монстр активирован");
         }
     }
     
@@ -299,6 +364,7 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     {
         if (!waitingForAnswer) return;
         waitingForAnswer = false;
+        isWaitingForInput = false;
         SetButtonsVisible(false);
         ShowTextLine("timeout_dialogue", () => { StartCoroutine(SpawnMonsterAndKill()); });
     }
@@ -331,18 +397,50 @@ public class DoorRiddleMinigame : MonoBehaviour, IClickable
     
     private void FreezePlayer(bool freeze)
     {
-        PlayerMovement movement = FindObjectOfType<PlayerMovement>();
-        if (movement != null) movement.SetMovementEnabled(!freeze);
-        MouseLook mouseLook = FindObjectOfType<MouseLook>();
-        if (mouseLook != null) mouseLook.enabled = !freeze;
-        if (freeze) { Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
-        else { Cursor.lockState = CursorLockMode.Locked; Cursor.visible = false; }
+        if (freeze)
+        {
+            if (playerTransform != null)
+            {
+                savedPosition = playerTransform.position;
+                savedRotation = playerTransform.rotation;
+                isFrozen = true;
+            }
+            
+            if (playerMovement != null)
+                playerMovement.SetMovementEnabled(false);
+            
+            if (mouseLook != null)
+                mouseLook.enabled = false;
+            
+            if (characterController != null)
+                characterController.enabled = false;
+            
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
+        else
+        {
+            isFrozen = false;
+            
+            if (playerMovement != null)
+                playerMovement.SetMovementEnabled(true);
+            
+            if (mouseLook != null)
+                mouseLook.enabled = true;
+            
+            if (characterController != null)
+                characterController.enabled = true;
+            
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
     }
     
     private void SetButtonsVisible(bool visible)
     {
         if (answerButtonLeft != null) answerButtonLeft.gameObject.SetActive(visible);
         if (answerButtonRight != null) answerButtonRight.gameObject.SetActive(visible);
+        Debug.Log($"DoorRiddleMinigame: Кнопки видимы = {visible}");
     }
     
     private void SetButtonTexts(string leftKey, string rightKey)

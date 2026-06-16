@@ -61,7 +61,6 @@ public class SelectionManager : MonoBehaviour
         Ray ray = new Ray(mainCamera.transform.position, mainCamera.transform.forward);
         RaycastHit hit;
         GameObject hitObject = null;
-        float hitDistance = maxDistance;
         
         if (Physics.Raycast(ray, out hit, maxDistance, targetLayer))
         {
@@ -71,13 +70,18 @@ public class SelectionManager : MonoBehaviour
             
             if (interactable != null)
             {
+                // Пропускаем FinalMonster для обводки
+                if (interactable is FinalMonster)
+                {
+                    return;
+                }
+                
                 float range = interactable.GetInteractionRange();
                 float distanceToPlayer = Vector3.Distance(hit.collider.transform.position, playerTransform.position);
                 
                 if (hit.distance <= range && distanceToPlayer <= range)
                 {
                     hitObject = hit.collider.gameObject;
-                    hitDistance = hit.distance;
                 }
             }
         }
@@ -102,7 +106,7 @@ public class SelectionManager : MonoBehaviour
                 if (interactable == null)
                     interactable = hoveredObj.GetComponentInParent<IClickable>();
                 
-                if (interactable != null)
+                if (interactable != null && !(interactable is FinalMonster))
                 {
                     GameObject outlineTarget = interactable.GetOutlineTarget();
                     SetOutline(outlineTarget, true);
@@ -113,19 +117,22 @@ public class SelectionManager : MonoBehaviour
         
         if (Input.GetMouseButtonDown(0) && hoveredObj != null)
         {
-            if (selectedObj != null && selectedObj != hoveredObj)
+            IClickable interactable = hoveredObj.GetComponent<IClickable>();
+            if (interactable == null)
+                interactable = hoveredObj.GetComponentInParent<IClickable>();
+            
+            if (interactable != null && !(interactable is FinalMonster))
             {
-                IClickable oldInteractable = selectedObj.GetComponent<IClickable>();
-                if (oldInteractable != null)
+                if (selectedObj != null && selectedObj != hoveredObj)
                 {
-                    SetOutline(oldInteractable.GetOutlineTarget(), false);
+                    IClickable oldInteractable = selectedObj.GetComponent<IClickable>();
+                    if (oldInteractable != null)
+                    {
+                        SetOutline(oldInteractable.GetOutlineTarget(), false);
+                    }
                 }
-            }
-            selectedObj = hoveredObj;
-            IClickable newInteractable = selectedObj.GetComponent<IClickable>();
-            if (newInteractable != null)
-            {
-                SetOutline(newInteractable.GetOutlineTarget(), true);
+                selectedObj = hoveredObj;
+                SetOutline(selectedObj, true);
             }
         }
         

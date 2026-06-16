@@ -18,21 +18,27 @@ public class FadeToBlack : MonoBehaviour
         }
         Instance = this;
         
-        if (fadeImage != null)
-        {
-            Color color = fadeImage.color;
-            color.a = 0f;
-            fadeImage.color = color;
-            fadeImage.gameObject.SetActive(true);
-        }
-        else
+        if (fadeImage == null)
         {
             Debug.LogError("FadeToBlack: fadeImage не назначен в инспекторе!");
+            return;
         }
+        
+        Color color = fadeImage.color;
+        color.a = 0f;
+        fadeImage.color = color;
+        fadeImage.gameObject.SetActive(true);
     }
     
     public void FadeOut(System.Action onComplete = null)
     {
+        if (fadeImage == null)
+        {
+            Debug.LogError("FadeToBlack: fadeImage равен null!");
+            onComplete?.Invoke();
+            return;
+        }
+        
         StartCoroutine(FadeOutRoutine(onComplete));
     }
     
@@ -40,12 +46,17 @@ public class FadeToBlack : MonoBehaviour
     {
         if (fadeImage == null) yield break;
         
+        // Убеждаемся, что объект активен
+        fadeImage.gameObject.SetActive(true);
+        
         float elapsed = 0f;
         Color color = fadeImage.color;
+        color.a = 0f;
+        fadeImage.color = color;
         
         while (elapsed < fadeDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float alpha = Mathf.Clamp01(elapsed / fadeDuration);
             color.a = alpha;
             fadeImage.color = color;
@@ -54,6 +65,42 @@ public class FadeToBlack : MonoBehaviour
         
         color.a = 1f;
         fadeImage.color = color;
+        
+        onComplete?.Invoke();
+    }
+    
+    public void FadeIn(System.Action onComplete = null)
+    {
+        if (fadeImage == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+        
+        StartCoroutine(FadeInRoutine(onComplete));
+    }
+    
+    private IEnumerator FadeInRoutine(System.Action onComplete)
+    {
+        if (fadeImage == null) yield break;
+        
+        float elapsed = 0f;
+        Color color = fadeImage.color;
+        color.a = 1f;
+        fadeImage.color = color;
+        
+        while (elapsed < fadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float alpha = Mathf.Clamp01(1f - (elapsed / fadeDuration));
+            color.a = alpha;
+            fadeImage.color = color;
+            yield return null;
+        }
+        
+        color.a = 0f;
+        fadeImage.color = color;
+        fadeImage.gameObject.SetActive(false);
         
         onComplete?.Invoke();
     }

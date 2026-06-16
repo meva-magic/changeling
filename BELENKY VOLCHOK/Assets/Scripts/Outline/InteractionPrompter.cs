@@ -37,7 +37,11 @@ public class InteractionPrompter : MonoBehaviour
         bool isMinigameActive = minigame != null && minigame.IsMinigameActive;
         bool isDialogueActive = DialogueSystem.Instance != null && DialogueSystem.Instance.IsDialogueActive;
         
-        if (isMinigameActive || isDialogueActive)
+        // Проверяем активность двери
+        DoorRiddleMinigame door = FindObjectOfType<DoorRiddleMinigame>();
+        bool isDoorGameActive = door != null && door.IsActive();
+        
+        if (isMinigameActive || isDialogueActive || isDoorGameActive)
         {
             if (isHintVisible) HideHint();
             return;
@@ -53,6 +57,12 @@ public class InteractionPrompter : MonoBehaviour
             
             if (interactable != null)
             {
+                if (interactable is FinalMonster)
+                {
+                    if (isHintVisible) HideHint();
+                    return;
+                }
+                
                 float range = interactable.GetInteractionRange();
                 float distanceToPlayer = Vector3.Distance(hit.collider.transform.position, playerTransform.position);
                 
@@ -93,8 +103,5 @@ public class InteractionPrompter : MonoBehaviour
         }
     }
     
-    private string GetLocalizedText(string key)
-    {
-        return key;
-    }
+    private string GetLocalizedText(string key) { return key; }
 }

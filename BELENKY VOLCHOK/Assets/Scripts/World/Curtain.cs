@@ -20,8 +20,6 @@ public class CurtainController : MonoBehaviour, IClickable
     [SerializeField] private Slider progressSlider;
     [SerializeField] private Image progressFill;
     [SerializeField] private string movementSound = "curtain_sound";
-    [SerializeField] private float threatTime = 20f;
-    [SerializeField] private float threatFadeStart = 10f;
     
     private float holdProgress;
     private bool isHolding;
@@ -31,6 +29,12 @@ public class CurtainController : MonoBehaviour, IClickable
     private bool isTimerActive;
     private Outline cachedOutline;
     private bool wasOutlineEnabled;
+    private PlayerMovement playerMovement;
+    private bool counterSourceAdded = false;
+    private bool isPausedByCurtain = false;
+    private float progressAtHoldStart = 0f;
+    private float currentProgressAtRelease = 0f;
+    private bool isMonsterDefeatedProcessed = false;
     
     private GameObject EffectiveOutlineTarget
     {
@@ -46,7 +50,11 @@ public class CurtainController : MonoBehaviour, IClickable
         }
         
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTransform = player.transform;
+        if (player != null)
+        {
+            playerTransform = player.transform;
+            playerMovement = player.GetComponent<PlayerMovement>();
+        }
         SetOpenState();
         if (progressPanel != null) progressPanel.SetActive(false);
         if (progressSlider != null)
@@ -55,99 +63,89 @@ public class CurtainController : MonoBehaviour, IClickable
             progressSlider.maxValue = requiredHoldTime;
             progressSlider.value = 0;
         }
-        Debug.Log($"CurtainController {gameObject.name}: Инициализирован");
+        
+        isMonsterDefeatedProcessed = false;
     }
     
     private void Update()
     {
         bool stillHolding = Input.GetKey(KeyCode.E) || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(0);
         if (!stillHolding && isHolding) CancelHold();
+        
+        if (isHolding && linkedWindow != null && linkedWindow.HasActiveMonster && !monsterDefeated)
+        {
+            float holdProgressNormalized = holdProgress / requiredHoldTime;
+            float threatProgress = Mathf.Max(0f, progressAtHoldStart * (1f - holdProgressNormalized));
+            ThreatSystem.Instance?.SetProgress(threatProgress);
+            currentProgressAtRelease = threatProgress;
+        }
     }
     
     public void OnInteract()
     {
-        Debug.Log($"CurtainController {gameObject.name}: OnInteract вызван");
-        
-        if (!IsPlayerInRange())
-        {
-            Debug.Log($"CurtainController {gameObject.name}: Игрок слишком далеко");
-            return;
-        }
-        
-        if (!isHolding)
-        {
-            Debug.Log($"CurtainController {gameObject.name}: Начинаем удержание");
-            BeginHold();
-        }
-        else
-        {
-            Debug.Log($"CurtainController {gameObject.name}: Уже удерживается");
-        }
+        if (!IsPlayerInRange()) return;
+        if (!isHolding) BeginHold();
     }
     
     private bool IsPlayerInRange()
     {
         if (playerTransform == null) return true;
         float distance = Vector3.Distance(transform.position, playerTransform.position);
-        Debug.Log($"CurtainController {gameObject.name}: Расстояние до игрока = {distance}, требуется <= {interactionDistance}");
         return distance <= interactionDistance;
     }
     
-    public float GetInteractionRange()
-    {
-        return interactionDistance;
-    }
-    
-    public string GetPromptKey()
-    {
-        return "";
-    }
-    
-    public GameObject GetOutlineTarget()
-    {
-        return EffectiveOutlineTarget;
-    }
-    
-    public void RestoreOutline()
-    {
-        if (cachedOutline != null)
-        {
-            cachedOutline.enabled = wasOutlineEnabled;
-        }
-    }
+    public float GetInteractionRange() { return interactionDistance; }
+    public string GetPromptKey() { return ""; }
+    public GameObject GetOutlineTarget() { return EffectiveOutlineTarget; }
     
     private void BeginHold()
     {
         if (isHolding) return;
         isHolding = true;
-        PlaySound();
+        
         bool hasMonster = linkedWindow != null && linkedWindow.HasActiveMonster;
         
-        Debug.Log($"CurtainController {gameObject.name}: BeginHold, hasMonster={hasMonster}, monsterDefeated={monsterDefeated}");
-        
-        if (hasMonster && !monsterDefeated)
+        if (!hasMonster || monsterDefeated)
         {
-            if (cachedOutline != null)
-            {
-                wasOutlineEnabled = cachedOutline.enabled;
-                cachedOutline.enabled = false;
-            }
-            if (progressPanel != null) progressPanel.SetActive(true);
-            if (fillProcess != null) StopCoroutine(fillProcess);
-            fillProcess = StartCoroutine(FillProcess());
-            if (!isTimerActive)
-            {
-                isTimerActive = true;
-                ThreatTimer.Instance?.StartThreatTimer(threatTime, threatFadeStart, () => KillPlayer());
-            }
+            SetClosedState();
+            return;
         }
+        
+        if (ThreatSystem.Instance != null)
+        {
+            progressAtHoldStart = ThreatSystem.Instance.GetProgress();
+            ThreatSystem.Instance.SetCurtainStartProgress(progressAtHoldStart);
+            ThreatSystem.Instance.PauseCounterWithoutSave();
+            isPausedByCurtain = true;
+            currentProgressAtRelease = progressAtHoldStart;
+        }
+        
+        if (playerMovement != null)
+            playerMovement.SetMovementEnabled(false);
+        
+        PlaySound();
+        
+        if (cachedOutline != null)
+        {
+            wasOutlineEnabled = cachedOutline.enabled;
+            cachedOutline.enabled = false;
+        }
+        if (progressPanel != null) progressPanel.SetActive(true);
+        if (fillProcess != null) StopCoroutine(fillProcess);
+        fillProcess = StartCoroutine(FillProcess());
+        
+        if (!counterSourceAdded)
+        {
+            counterSourceAdded = true;
+            ThreatSystem.Instance?.AddCounterSource();
+        }
+        isTimerActive = true;
         SetClosedState();
     }
     
     private IEnumerator FillProcess()
     {
         float elapsed = holdProgress;
-        Debug.Log($"CurtainController {gameObject.name}: FillProcess начат");
         
         while (isHolding)
         {
@@ -155,10 +153,20 @@ public class CurtainController : MonoBehaviour, IClickable
             if (!stillHolding) { CancelHold(); yield break; }
             if (!IsPlayerInRange()) { CancelHold(); yield break; }
             bool hasMonster = linkedWindow != null && linkedWindow.HasActiveMonster;
-            if (!hasMonster) { CancelHold(); yield break; }
+            if (!hasMonster) 
+            { 
+                CancelHold(); 
+                yield break; 
+            }
+            if (monsterDefeated) 
+            { 
+                CancelHold(); 
+                yield break; 
+            }
             elapsed += fillSpeed * Time.deltaTime;
             holdProgress = Mathf.Min(elapsed, requiredHoldTime);
             UpdateProgress(holdProgress / requiredHoldTime);
+            
             if (elapsed >= requiredHoldTime)
             {
                 DefeatMonster();
@@ -170,36 +178,73 @@ public class CurtainController : MonoBehaviour, IClickable
     
     private void CancelHold()
     {
-        Debug.Log($"CurtainController {gameObject.name}: CancelHold");
         isHolding = false;
+        
+        if (playerMovement != null)
+            playerMovement.SetMovementEnabled(true);
+        
+        if (isPausedByCurtain && ThreatSystem.Instance != null)
+        {
+            ThreatSystem.Instance.SetProgress(currentProgressAtRelease);
+            ThreatSystem.Instance.ResumeCounter();
+            isPausedByCurtain = false;
+        }
+        
         if (fillProcess != null) StopCoroutine(fillProcess);
         holdProgress = 0;
         if (progressPanel != null) progressPanel.SetActive(false);
         UpdateProgress(0);
-        SetOpenState();
+        SetOpenState(); // Открываем только при отпускании
         PlaySound();
-        monsterDefeated = false;
-        RestoreOutline();
-        if (isTimerActive)
+        
+        if (counterSourceAdded && !monsterDefeated)
         {
-            ThreatTimer.Instance?.StopThreatTimer();
-            isTimerActive = false;
+            counterSourceAdded = false;
+            ThreatSystem.Instance?.RemoveCounterSource();
         }
+        
+        RestoreOutline();
+        isTimerActive = false;
+        isMonsterDefeatedProcessed = false;
     }
     
     private void DefeatMonster()
     {
-        Debug.Log($"CurtainController {gameObject.name}: DefeatMonster");
+        if (isMonsterDefeatedProcessed) return;
+        isMonsterDefeatedProcessed = true;
+        
         monsterDefeated = true;
+        isHolding = false;
         PlaySound();
-        if (linkedWindow != null && linkedWindow.HasActiveMonster) linkedWindow.BanishMonster();
+        
+        if (linkedWindow != null && linkedWindow.HasActiveMonster)
+        {
+            linkedWindow.BanishMonster();
+        }
+        
         if (progressPanel != null) progressPanel.SetActive(false);
         UpdateProgress(0);
-        RestoreOutline();
-        if (isTimerActive)
+        // НЕ открываем штору! Она откроется только при отпускании.
+        
+        if (counterSourceAdded)
         {
-            ThreatTimer.Instance?.StopThreatTimer();
-            isTimerActive = false;
+            counterSourceAdded = false;
+            ThreatSystem.Instance?.RemoveCounterSource();
+        }
+        
+        isTimerActive = false;
+        progressAtHoldStart = 0f;
+        currentProgressAtRelease = 0f;
+        
+        if (playerMovement != null)
+            playerMovement.SetMovementEnabled(true);
+    }
+    
+    private void RestoreOutline()
+    {
+        if (cachedOutline != null)
+        {
+            cachedOutline.enabled = wasOutlineEnabled;
         }
     }
     

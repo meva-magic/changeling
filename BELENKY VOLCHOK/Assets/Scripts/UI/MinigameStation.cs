@@ -27,6 +27,7 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
     private Vector3 savedPlayerPosition;
     private Quaternion savedPlayerRotation;
     private bool isDestroyed = false;
+    private string minigameId = "";
     
     private void Start()
     {
@@ -54,6 +55,9 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
             currentValue = Mathf.Max(currentValue, 0);
             UpdateDisplay(currentValue / activeConfig.TargetProgress);
             
+            float progress = (1f - (currentValue / activeConfig.TargetProgress)) * 100f;
+            ThreatSystem.Instance?.SetProgress(progress);
+            
             if (currentValue <= 0)
             {
                 CancelCurrentMinigame();
@@ -73,6 +77,7 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         activeConfig = config;
         currentValue = 0;
         isRunning = true;
+        minigameId = config.Name;
         
         FreezePlayer();
         
@@ -85,7 +90,8 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         ui?.HideMessage();
         
         EventBus.Broadcast(GameEvents.MinigameStarted);
-        Debug.Log($"MinigameStation: Старт мини-игры {config.Name}");
+        
+        ThreatSystem.Instance?.PauseCounter();
     }
     
     private void ProcessClick()
@@ -95,12 +101,14 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         currentValue = Mathf.Min(currentValue + activeConfig.ClickPower, activeConfig.TargetProgress);
         UpdateDisplay(currentValue / activeConfig.TargetProgress);
         
+        float progress = (1f - (currentValue / activeConfig.TargetProgress)) * 100f;
+        ThreatSystem.Instance?.SetProgress(progress);
+        
         if (!string.IsNullOrEmpty(clickSoundName))
             AudioManager.instance?.Play(clickSoundName);
         
         if (currentValue >= activeConfig.TargetProgress)
         {
-            Debug.Log("MinigameStation: Достигнут 100%, завершаем мини-игру");
             FinishMinigame();
         }
     }
@@ -122,16 +130,18 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         if (isDestroyed) return;
         
         isRunning = false;
-        Debug.Log("MinigameStation: FinishMinigame вызван");
         
         if (minigameCanvas != null)
             minigameCanvas.SetActive(false);
         
         RestorePlayer();
         
+        // НЕ сбрасываем счётчик здесь! Это делает сам объект (свеча/камин)
+        // ThreatSystem.Instance?.SetProgress(0f);
+        // ThreatSystem.Instance?.StopCounter();
+        
         if (activeConfig != null && activeConfig.OnFinished != null)
         {
-            Debug.Log("MinigameStation: Вызов OnFinished");
             activeConfig.OnFinished();
         }
         
@@ -169,6 +179,8 @@ public class MinigameStation : MonoBehaviour, MinigameStarter
         
         if (activeConfig != null && activeConfig.OnCancelled != null)
             activeConfig.OnCancelled();
+        
+        ThreatSystem.Instance?.ResumeCounter();
         
         activeConfig = null;
         currentValue = 0;
