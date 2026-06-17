@@ -114,7 +114,6 @@ public class CurtainController : MonoBehaviour, IClickable
         if (ThreatSystem.Instance != null)
         {
             progressAtHoldStart = ThreatSystem.Instance.GetProgress();
-            ThreatSystem.Instance.SetCurtainStartProgress(progressAtHoldStart);
             ThreatSystem.Instance.PauseCounterWithoutSave();
             isPausedByCurtain = true;
             currentProgressAtRelease = progressAtHoldStart;
@@ -194,7 +193,7 @@ public class CurtainController : MonoBehaviour, IClickable
         holdProgress = 0;
         if (progressPanel != null) progressPanel.SetActive(false);
         UpdateProgress(0);
-        SetOpenState(); // Открываем только при отпускании
+        SetOpenState();
         PlaySound();
         
         if (counterSourceAdded && !monsterDefeated)
@@ -214,7 +213,6 @@ public class CurtainController : MonoBehaviour, IClickable
         isMonsterDefeatedProcessed = true;
         
         monsterDefeated = true;
-        isHolding = false;
         PlaySound();
         
         if (linkedWindow != null && linkedWindow.HasActiveMonster)
@@ -224,7 +222,6 @@ public class CurtainController : MonoBehaviour, IClickable
         
         if (progressPanel != null) progressPanel.SetActive(false);
         UpdateProgress(0);
-        // НЕ открываем штору! Она откроется только при отпускании.
         
         if (counterSourceAdded)
         {
@@ -246,11 +243,6 @@ public class CurtainController : MonoBehaviour, IClickable
         {
             cachedOutline.enabled = wasOutlineEnabled;
         }
-    }
-    
-    private void KillPlayer()
-    {
-        PenaltySystem.Instance?.TriggerDeath();
     }
     
     private void UpdateProgress(float normalized)

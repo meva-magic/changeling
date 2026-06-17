@@ -447,6 +447,7 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 541646107138846550}
   - {fileID: 4169094772538065120}
   - {fileID: 2995300430822900742}
   - {fileID: 3561589050135837347}
@@ -454,7 +455,6 @@ RectTransform:
   - {fileID: 5976819430727305271}
   - {fileID: 1818487548151865991}
   - {fileID: 1023139826353734745}
-  - {fileID: 541646107138846550}
   m_Father: {fileID: 5855066062127226300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -632,7 +632,6 @@ GameObject:
   - component: {fileID: 8077233006623018781}
   - component: {fileID: 1371929885535175448}
   - component: {fileID: 8970386393080735184}
-  - component: {fileID: 8848743921375823924}
   m_Layer: 5
   m_Name: Pause Panel
   m_TagString: Untagged
@@ -652,9 +651,9 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1184141221379491367}
   - {fileID: 1869005261936078848}
   - {fileID: 5222082755503418593}
-  - {fileID: 1184141221379491367}
   m_Father: {fileID: 5855066062127226300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -700,26 +699,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &8848743921375823924
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1336376953174656840}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1400a88a4517b9a4cb7dacdc73fa83a7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  resumeButton: {fileID: 3845940865947132400}
-  settingsButton: {fileID: 3911237771922250985}
-  menuButton: {fileID: 7377620599930111844}
-  settingsPanel: {fileID: 1519411529975396812}
-  confirmMenuPanel: {fileID: 7556248914145920599}
-  confirmYesButton: {fileID: 481047814038853799}
-  confirmNoButton: {fileID: 4279215640997081500}
-  clickSoundName: ButtonClick
 --- !u!1 &1399515286362292945
 GameObject:
   m_ObjectHideFlags: 0
@@ -729,6 +708,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5855066062127226300}
+  - component: {fileID: 8009580698497576107}
   m_Layer: 5
   m_Name: 'Menus '
   m_TagString: Untagged
@@ -759,6 +739,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &8009580698497576107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1399515286362292945}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1400a88a4517b9a4cb7dacdc73fa83a7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  resumeButton: {fileID: 3845940865947132400}
+  settingsButton: {fileID: 3911237771922250985}
+  menuButton: {fileID: 7377620599930111844}
+  settingsPanel: {fileID: 1519411529975396812}
+  confirmMenuPanel: {fileID: 7556248914145920599}
+  confirmYesButton: {fileID: 481047814038853799}
+  confirmNoButton: {fileID: 4279215640997081500}
+  clickSoundName: ButtonClick
 --- !u!1 &1412347820905251038
 GameObject:
   m_ObjectHideFlags: 0
@@ -986,10 +986,10 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6188080948385513373}
   - {fileID: 693763618165658459}
   - {fileID: 5550898970541194143}
   - {fileID: 1188970601462764107}
-  - {fileID: 6188080948385513373}
   m_Father: {fileID: 5855066062127226300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5048,11 +5048,11 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 6100847682195757307}
   - {fileID: 8814921519501966386}
   - {fileID: 260277042587429561}
   - {fileID: 7422603942720942627}
   - {fileID: 3765099194307534896}
-  - {fileID: 6100847682195757307}
   m_Father: {fileID: 5855066062127226300}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}

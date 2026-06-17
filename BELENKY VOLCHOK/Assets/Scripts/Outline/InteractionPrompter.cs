@@ -37,11 +37,7 @@ public class InteractionPrompter : MonoBehaviour
         bool isMinigameActive = minigame != null && minigame.IsMinigameActive;
         bool isDialogueActive = DialogueSystem.Instance != null && DialogueSystem.Instance.IsDialogueActive;
         
-        // Проверяем активность двери
-        DoorRiddleMinigame door = FindObjectOfType<DoorRiddleMinigame>();
-        bool isDoorGameActive = door != null && door.IsActive();
-        
-        if (isMinigameActive || isDialogueActive || isDoorGameActive)
+        if (isMinigameActive || isDialogueActive)
         {
             if (isHintVisible) HideHint();
             return;
@@ -57,6 +53,7 @@ public class InteractionPrompter : MonoBehaviour
             
             if (interactable != null)
             {
+                // Проверяем, не является ли объект FinalMonster
                 if (interactable is FinalMonster)
                 {
                     if (isHintVisible) HideHint();

@@ -8,63 +8,114 @@ public class PenaltySystem : MonoBehaviour
     [SerializeField] private GameObject deathPanel;
     [SerializeField] private UnityEngine.UI.Button replayButton;
     [SerializeField] private string currentSceneName;
-    [SerializeField] private float flickerDuration = 0.2f;
-    [SerializeField] private int flickerCount = 3;
-    [SerializeField] private float finalFadeDuration = 1f;
+    [SerializeField] private float fadeInDuration = 1f;
     
     private CanvasGroup deathCanvasGroup;
+    private bool isDeathActive = false;
     
     private void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
+        
         if (deathPanel != null)
         {
             deathPanel.SetActive(false);
             deathCanvasGroup = deathPanel.GetComponent<CanvasGroup>();
             if (deathCanvasGroup == null) deathCanvasGroup = deathPanel.AddComponent<CanvasGroup>();
+            
             UnityEngine.UI.Image deathImage = deathPanel.GetComponent<UnityEngine.UI.Image>();
             if (deathImage == null) deathImage = deathPanel.AddComponent<UnityEngine.UI.Image>();
             deathImage.color = Color.black;
             deathCanvasGroup.alpha = 0f;
         }
-        if (replayButton != null) replayButton.onClick.AddListener(ReloadScene);
+        
+        if (replayButton != null)
+        {
+            replayButton.onClick.AddListener(ReloadScene);
+            replayButton.gameObject.SetActive(false);
+        }
     }
     
     public void TriggerDeath()
     {
+        if (isDeathActive) return;
+        isDeathActive = true;
+        
+        Debug.Log("PenaltySystem: TriggerDeath вызван!");
+        
         Time.timeScale = 0f;
+        
         AudioSource[] sources = FindObjectsOfType<AudioSource>();
-        foreach (AudioSource source in sources) source.Stop();
+        foreach (AudioSource source in sources)
+        {
+            source.Stop();
+        }
+        
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
         StartCoroutine(DeathRoutine());
     }
     
     private IEnumerator DeathRoutine()
     {
-        if (deathPanel != null) deathPanel.SetActive(true);
-        deathCanvasGroup.alpha = 0f;
-        for (int i = 0; i < flickerCount; i++)
+        if (deathPanel != null)
         {
-            deathCanvasGroup.alpha = 1f;
-            yield return new WaitForSecondsRealtime(flickerDuration);
+            deathPanel.SetActive(true);
             deathCanvasGroup.alpha = 0f;
-            yield return new WaitForSecondsRealtime(flickerDuration * 0.5f);
         }
-        deathCanvasGroup.alpha = 1f;
+        
         float elapsed = 0f;
-        while (elapsed < finalFadeDuration)
+        while (elapsed < fadeInDuration)
         {
             elapsed += Time.unscaledDeltaTime;
-            deathCanvasGroup.alpha = Mathf.Lerp(1f, 0f, elapsed / finalFadeDuration);
+            if (deathCanvasGroup != null)
+            {
+                deathCanvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / fadeInDuration);
+            }
             yield return null;
         }
-        deathCanvasGroup.alpha = 0f;
-        if (replayButton != null) replayButton.gameObject.SetActive(true);
+        
+        if (deathCanvasGroup != null)
+        {
+            deathCanvasGroup.alpha = 1f;
+        }
+        
+        if (replayButton != null)
+        {
+            replayButton.gameObject.SetActive(true);
+        }
+        
+        isDeathActive = false;
     }
     
     private void ReloadScene()
     {
+        Debug.Log($"PenaltySystem: Перезагрузка сцены {currentSceneName}");
+        
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+        
+        if (string.IsNullOrEmpty(currentSceneName))
+        {
+            Debug.LogError("PenaltySystem: currentSceneName не задан!");
+            UnityEngine.SceneManagement.SceneManager.LoadScene(
+                UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
+            );
+            return;
+        }
+        
         UnityEngine.SceneManagement.SceneManager.LoadScene(currentSceneName);
+    }
+    
+    public void SetSceneName(string sceneName)
+    {
+        currentSceneName = sceneName;
     }
 }

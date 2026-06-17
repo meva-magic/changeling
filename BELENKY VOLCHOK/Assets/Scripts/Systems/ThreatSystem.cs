@@ -16,27 +16,17 @@ public class ThreatSystem : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float threatDuration = 20f;
     
-    private Coroutine activeThreat;
-    private float currentIntensity = 0f;
-    private float targetIntensity = 0f;
-    private float transitionSpeed = 1f;
-    private bool isShaking = false;
-    private System.Action onMaxReached;
-    private bool isMaxReached = false;
-    private Camera mainCamera;
-    private Quaternion originalRotation;
-    
     private float globalProgress = 0f;
     private bool isActive = false;
     private bool isPaused = false;
-    private System.Action onTimeout;
     private int activeCounterSources = 0;
     private float fillSpeed = 0f;
     private float savedProgress = 0f;
-    private bool wasActive = false;
-    private float curtainStartProgress = 0f;
     private bool resumeWithSavedProgress = true;
     private float minOverlayAlpha = 0f;
+    private bool isDeathTriggered = false;
+    private Camera mainCamera;
+    private Quaternion originalRotation;
     
     private void Awake()
     {
@@ -69,7 +59,7 @@ public class ThreatSystem : MonoBehaviour
     
     private void Update()
     {
-        if (isActive && !isPaused)
+        if (isActive && !isPaused && !isDeathTriggered)
         {
             globalProgress += fillSpeed * Time.deltaTime;
             
@@ -78,21 +68,20 @@ public class ThreatSystem : MonoBehaviour
                 globalProgress = 100f;
                 isActive = false;
                 activeCounterSources = 0;
-                if (onTimeout != null)
+                
+                if (!isDeathTriggered)
                 {
-                    var callback = onTimeout;
-                    onTimeout = null;
-                    callback?.Invoke();
+                    isDeathTriggered = true;
+                    Debug.Log("[ThreatSystem] Угроза достигла 100%! Вызываем смерть");
+                    TriggerDeath();
                 }
             }
         }
         
         float fadeValue = globalProgress / 100f;
-        currentIntensity = fadeValue;
         UpdateUI(fadeValue);
-        isShaking = fadeValue > 0.01f;
         
-        if (isShaking && mainCamera != null)
+        if (fadeValue > 0.01f && mainCamera != null)
         {
             float shakeAmount = shakeCurve.Evaluate(fadeValue) * maxShakeMagnitude;
             float shakeX = Random.Range(-shakeAmount, shakeAmount);
@@ -100,15 +89,41 @@ public class ThreatSystem : MonoBehaviour
             float shakeZ = Random.Range(-shakeAmount * 0.5f, shakeAmount * 0.5f);
             mainCamera.transform.localRotation = originalRotation * Quaternion.Euler(shakeX, shakeY, shakeZ);
         }
-        
-        if (fadeValue >= 0.99f && !isMaxReached)
+        else if (mainCamera != null && fadeValue <= 0.01f)
         {
-            isMaxReached = true;
-            if (onMaxReached != null)
-                onMaxReached.Invoke();
+            mainCamera.transform.localRotation = originalRotation;
+        }
+    }
+    
+    private void TriggerDeath()
+    {
+        // Сохраняем позицию игрока перед смертью
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            // Принудительно останавливаем физику
+            Rigidbody rb = player.GetComponent<Rigidbody>();
+            if (rb != null)
+            {
+                rb.velocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
+            
+            CharacterController cc = player.GetComponent<CharacterController>();
+            if (cc != null)
+            {
+                // Просто отключаем контроллер на время
+            }
         }
         
-        wasActive = isActive;
+        // Останавливаем камеру
+        if (mainCamera != null)
+        {
+            mainCamera.transform.localRotation = originalRotation;
+        }
+        
+        // Вызываем PenaltySystem
+        PenaltySystem.Instance?.TriggerDeath();
     }
     
     private void UpdateUI(float fadeValue)
@@ -125,13 +140,12 @@ public class ThreatSystem : MonoBehaviour
     public void SetMinOverlayAlpha(float minAlpha)
     {
         minOverlayAlpha = Mathf.Clamp01(minAlpha);
-        Debug.Log($"ThreatSystem: Минимальная прозрачность установлена на {minOverlayAlpha}");
     }
     
     public void AddCounterSource()
     {
+        if (isDeathTriggered) return;
         activeCounterSources++;
-        Debug.Log($"[ThreatSystem] Активных угроз: {activeCounterSources}");
         
         if (activeCounterSources > 0 && !isActive)
         {
@@ -139,7 +153,7 @@ public class ThreatSystem : MonoBehaviour
             isPaused = false;
             globalProgress = 0f;
             savedProgress = 0f;
-            wasActive = true;
+            isDeathTriggered = false;
         }
         else if (activeCounterSources > 0 && isPaused)
         {
@@ -149,8 +163,8 @@ public class ThreatSystem : MonoBehaviour
     
     public void RemoveCounterSource()
     {
+        if (isDeathTriggered) return;
         activeCounterSources = Mathf.Max(0, activeCounterSources - 1);
-        Debug.Log($"[ThreatSystem] Активных угроз: {activeCounterSources}");
         
         if (activeCounterSources <= 0)
         {
@@ -159,80 +173,25 @@ public class ThreatSystem : MonoBehaviour
         }
     }
     
-    public void ResetProgress()
-    {
-        globalProgress = 0f;
-        savedProgress = 0f;
-        curtainStartProgress = 0f;
-        isMaxReached = false;
-        UpdateUI(0f);
-        
-        if (activeCounterSources > 0)
-        {
-            isActive = true;
-            isPaused = false;
-        }
-    }
-    
-    public void ResetAllCounters()
+    public void ResetAll()
     {
         activeCounterSources = 0;
         isActive = false;
         isPaused = false;
-        wasActive = false;
         globalProgress = 0f;
         savedProgress = 0f;
-        curtainStartProgress = 0f;
-        onTimeout = null;
-        isMaxReached = false;
-        resumeWithSavedProgress = true;
+        isDeathTriggered = false;
         UpdateUI(0f);
-        
         if (mainCamera != null)
             mainCamera.transform.localRotation = originalRotation;
-    }
-    
-    public void StopCounterPermanently()
-    {
-        Debug.Log($"[ThreatSystem] Счётчик выключен навсегда");
-        activeCounterSources = 0;
-        isActive = false;
-        isPaused = false;
-        wasActive = false;
-        globalProgress = 0f;
-        savedProgress = 0f;
-        curtainStartProgress = 0f;
-        onTimeout = null;
-        isMaxReached = false;
-        resumeWithSavedProgress = true;
-        UpdateUI(0f);
-        
-        if (mainCamera != null)
-            mainCamera.transform.localRotation = originalRotation;
-    }
-    
-    public int GetActiveSourceCount()
-    {
-        return activeCounterSources;
     }
     
     public void StopCounter()
     {
-        if (activeCounterSources > 0)
-        {
-            Debug.Log($"[ThreatSystem] StopCounter игнорирован — есть источники ({activeCounterSources})");
-            return;
-        }
-        
         isActive = false;
         isPaused = false;
-        wasActive = false;
         globalProgress = 0f;
         savedProgress = 0f;
-        curtainStartProgress = 0f;
-        onTimeout = null;
-        isMaxReached = false;
-        resumeWithSavedProgress = true;
         UpdateUI(0f);
     }
     
@@ -255,43 +214,26 @@ public class ThreatSystem : MonoBehaviour
     {
         if (!isActive) return;
         isPaused = false;
-        
         if (resumeWithSavedProgress)
         {
             globalProgress = savedProgress;
         }
-        
         resumeWithSavedProgress = true;
     }
     
     public void SetProgress(float progress)
     {
+        if (isDeathTriggered) return;
         globalProgress = Mathf.Clamp(progress, 0f, 100f);
         UpdateUI(globalProgress / 100f);
-        isShaking = globalProgress > 1f;
         
-        if (globalProgress >= 100f && isActive)
+        if (globalProgress >= 100f && !isDeathTriggered)
         {
+            isDeathTriggered = true;
             isActive = false;
             activeCounterSources = 0;
-            curtainStartProgress = 0f;
-            if (onTimeout != null)
-            {
-                var callback = onTimeout;
-                onTimeout = null;
-                callback?.Invoke();
-            }
+            TriggerDeath();
         }
-    }
-    
-    public void SetCurtainStartProgress(float progress)
-    {
-        curtainStartProgress = progress;
-    }
-    
-    public float GetCurtainStartProgress()
-    {
-        return curtainStartProgress;
     }
     
     public float GetProgress()
